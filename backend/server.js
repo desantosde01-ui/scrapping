@@ -57,10 +57,8 @@ async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) 
             language: "pt-BR",
             countryCode: "br",
           });
-          const items = [];
-          for await (const item of client.dataset(run.defaultDatasetId).iterate()) {
-            items.push(item);
-          }
+          const dataset = await client.dataset(run.defaultDatasetId).listItems();
+          const items = dataset.items;
           todosItens.push(...items);
           jobs[jobId].progress.push({ type: "ok", msg: `✅ ${items.length} resultados para "${query}"`, ts: new Date() });
         } catch (e) {
