@@ -15,7 +15,7 @@ function generateJobId() {
 }
 
 app.post("/api/scrape", async (req, res) => {
-  const { apiToken, cidades, maxResultados = 20, notaMinima = 3.5 } = req.body;
+  const { apiToken, cidades, maxResultados = 10, notaMinima = 3.5 } = req.body;
   if (!apiToken || !cidades || cidades.length === 0) {
     return res.status(400).json({ error: "apiToken e cidades são obrigatórios." });
   }
@@ -42,7 +42,8 @@ app.get("/api/job/:jobId/download", (req, res) => {
 
 async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) {
   const client = new ApifyClient({ token: apiToken });
-  const termos = ["petshop banho e tosa", "petshop", "banho e tosa"];
+  // ✅ Apenas 1 termo — reduz custo em 3x
+  const termos = ["petshop banho e tosa"];
   const todosItens = [];
 
   try {
