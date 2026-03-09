@@ -47,14 +47,19 @@ async function upsertLeadsSupabase(leads) {
 }
 
 app.post("/api/scrape", async (req, res) => {
-  const { apiToken, cidades, maxResultados = 10, notaMinima = 3.5 } = req.body;
-  if (!apiToken || !cidades || cidades.length === 0) {
-    return res.status(400).json({ error: "apiToken e cidades são obrigatórios." });
+  const {
+    apiToken, nicho, quantidade = 20, notaMinima = 3.5,
+    lat, lng, raioInicial = 5000, autoExpandir = true,
+  } = req.body;
+
+  if (!apiToken || !nicho) {
+    return res.status(400).json({ error: "apiToken e nicho são obrigatórios." });
   }
+
   const jobId = generateJobId();
-  jobs[jobId] = { status: "running", progress: [], leads: [], error: null, startedAt: new Date() };
+  jobs[jobId] = { status: "running", progress: [], leads: [], error: null, startedAt: new Date(), nicho };
   res.json({ jobId });
-  runScraping(jobId, apiToken, cidades, maxResultados, notaMinima);
+  runScraping(jobId, apiToken, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir);
 });
 
 app.get("/api/job/:jobId", (req, res) => {
@@ -66,48 +71,81 @@ app.get("/api/job/:jobId", (req, res) => {
 app.get("/api/job/:jobId/download", (req, res) => {
   const job = jobs[req.params.jobId];
   if (!job || job.status !== "done") return res.status(404).json({ error: "Job não concluído." });
-  const md = generateMarkdown(job.leads);
+  const md = generateMarkdown(job.leads, job.nicho);
   res.setHeader("Content-Type", "text/markdown");
-  res.setHeader("Content-Disposition", `attachment; filename="leads_petshop_${req.params.jobId}.md"`);
+  res.setHeader("Content-Disposition", `attachment; filename="leads_${(job.nicho||'leads').replace(/\s+/g,'_')}_${req.params.jobId}.md"`);
   res.send(md);
 });
 
-async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) {
+function raioParaZoom(raioMetros) {
+  if (raioMetros <= 1000)  return 15;
+  if (raioMetros <= 3000)  return 14;
+  if (raioMetros <= 5000)  return 13;
+  if (raioMetros <= 10000) return 12;
+  if (raioMetros <= 20000) return 11;
+  return 10;
+}
+
+async function runScraping(jobId, apiToken, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir) {
   const client = new ApifyClient({ token: apiToken });
-  const termos = ["petshop banho e tosa"];
   const todosItens = [];
+  const raiosExpansao = [raioInicial, 10000, 20000, 50000].filter(r => r >= raioInicial);
 
   try {
-    for (const cidade of cidades) {
-      for (const termo of termos) {
-        const query = `${termo} ${cidade}`;
-        jobs[jobId].progress.push({ type: "search", msg: `🔍 Buscando: ${query}`, ts: new Date() });
-        try {
-          const run = await client.actor("compass/crawler-google-places").call({
-            searchStringsArray: [query],
-            maxCrawledPlacesPerSearch: maxResultados,
-            language: "pt-BR",
-            countryCode: "br",
-          });
-          const dataset = await client.dataset(run.defaultDatasetId).listItems();
-          const items = dataset.items;
-          todosItens.push(...items);
-          jobs[jobId].progress.push({ type: "ok", msg: `✅ ${items.length} resultados para "${query}"`, ts: new Date() });
-        } catch (e) {
-          jobs[jobId].progress.push({ type: "err", msg: `❌ Erro em "${query}": ${e.message}`, ts: new Date() });
+    for (const raio of raiosExpansao) {
+      const raioKm = (raio / 1000).toFixed(0);
+      jobs[jobId].progress.push({ type: "search", msg: `🔍 Buscando "${nicho}" — raio ${raioKm}km...`, ts: new Date() });
+
+      const input = {
+        searchStringsArray: [nicho],
+        maxCrawledPlacesPerSearch: quantidade * 2,
+        language: "pt-BR",
+        countryCode: "br",
+      };
+
+      if (lat && lng) {
+        input.lat = parseFloat(lat);
+        input.lng = parseFloat(lng);
+        input.zoom = raioParaZoom(raio);
+      }
+
+      try {
+        const run = await client.actor("compass/crawler-google-places").call(input);
+        const dataset = await client.dataset(run.defaultDatasetId).listItems();
+        const items = dataset.items || [];
+        const idsExistentes = new Set(todosItens.map(i => i.placeId || i.id));
+        const novos = items.filter(i => !idsExistentes.has(i.placeId || i.id));
+        todosItens.push(...novos);
+
+        jobs[jobId].progress.push({ type: "ok", msg: `✅ ${novos.length} novos resultados (total: ${todosItens.length})`, ts: new Date() });
+
+        const leadsValidos = extractLeads(todosItens, notaMinima);
+        if (leadsValidos.length >= quantidade) {
+          jobs[jobId].progress.push({ type: "ok", msg: `🎯 Meta de ${quantidade} leads atingida!`, ts: new Date() });
+          break;
         }
+
+        if (!autoExpandir) break;
+
+        if (leadsValidos.length < quantidade && raio !== raiosExpansao[raiosExpansao.length - 1]) {
+          const proxRaio = raiosExpansao[raiosExpansao.indexOf(raio) + 1];
+          jobs[jobId].progress.push({ type: "search", msg: `⚠️ Apenas ${leadsValidos.length} leads. Expandindo para ${(proxRaio/1000).toFixed(0)}km...`, ts: new Date() });
+        }
+      } catch (e) {
+        jobs[jobId].progress.push({ type: "err", msg: `❌ Erro: ${e.message}`, ts: new Date() });
+        if (!autoExpandir) break;
       }
     }
 
-    const leads = extractLeads(todosItens, notaMinima);
+    const leads = extractLeads(todosItens, notaMinima).slice(0, quantidade);
     leads.sort((a, b) => (parseFloat(b.nota) || 0) - (parseFloat(a.nota) || 0));
 
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
       await upsertLeadsSupabase(leads);
-      jobs[jobId].progress.push({ type: "ok", msg: `✅ Leads salvos no Supabase! Duplicatas ignoradas automaticamente.`, ts: new Date() });
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ Leads salvos! Duplicatas ignoradas.`, ts: new Date() });
     } catch (e) {
-      jobs[jobId].progress.push({ type: "err", msg: `❌ Erro ao salvar no Supabase: ${e.message}`, ts: new Date() });
+      jobs[jobId].progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
     }
 
     jobs[jobId].leads = leads;
@@ -129,8 +167,7 @@ function extractLeads(itens, notaMinima) {
     const nota = parseFloat(item.totalScore || item.rating || 0);
     if (nota && nota < notaMinima) continue;
     const horarios = Array.isArray(item.openingHours)
-      ? item.openingHours.slice(0, 3).map(h => `${h.day}: ${h.hours}`).join(" | ")
-      : "—";
+      ? item.openingHours.slice(0, 3).map(h => `${h.day}: ${h.hours}`).join(" | ") : "—";
     const categorias = Array.isArray(item.categories) ? item.categories.join(", ") : "—";
     leads.push({
       placeId,
@@ -141,20 +178,20 @@ function extractLeads(itens, notaMinima) {
       website: item.website || "—",
       nota: nota || "—",
       reviews: item.reviewsCount || item.totalReviews || 0,
-      categorias,
-      horario: horarios,
+      categorias, horario: horarios,
       googleMaps: item.url || item.shareUrl || "—",
+      lat: item.location?.lat || item.lat || null,
+      lng: item.location?.lng || item.lng || null,
     });
   }
   return leads;
 }
 
-function generateMarkdown(leads) {
+function generateMarkdown(leads, nicho = "leads") {
   const agora = new Date().toLocaleString("pt-BR");
   const lines = [];
-  lines.push("# 🐾 Leads — Petshops (Banho e Tosa)");
-  lines.push(`\n> **Gerado em:** ${agora}  `);
-  lines.push(`> **Total de leads:** ${leads.length}\n`);
+  lines.push(`# 📍 Leads — ${nicho}`);
+  lines.push(`\n> **Gerado em:** ${agora}  \n> **Total:** ${leads.length}\n`);
   lines.push("---\n");
   lines.push("## 📋 Tabela Resumo\n");
   lines.push("| # | Nome | Cidade | Telefone | Nota | Reviews | Website |");
@@ -162,32 +199,25 @@ function generateMarkdown(leads) {
   leads.forEach((l, i) => {
     const site = l.website !== "—" ? `[🔗 site](${l.website})` : "—";
     const nota = l.nota !== "—" ? `⭐ ${l.nota}` : "—";
-    lines.push(`| ${i + 1} | ${l.nome} | ${l.cidade} | ${l.telefone} | ${nota} | ${l.reviews} | ${site} |`);
+    lines.push(`| ${i+1} | ${l.nome} | ${l.cidade} | ${l.telefone} | ${nota} | ${l.reviews} | ${site} |`);
   });
-  lines.push("\n---\n");
-  lines.push("## 🗂️ Leads Detalhados\n");
+  lines.push("\n---\n## 🗂️ Leads Detalhados\n");
   leads.forEach((l, i) => {
-    lines.push(`### ${i + 1}. ${l.nome}`);
+    lines.push(`### ${i+1}. ${l.nome}`);
     lines.push(`- 📍 **Endereço:** ${l.endereco}, ${l.cidade}`);
     lines.push(`- 📞 **Telefone:** ${l.telefone}`);
     lines.push(`- 🌐 **Website:** ${l.website}`);
     lines.push(`- ⭐ **Nota:** ${l.nota} (${l.reviews} avaliações)`);
     lines.push(`- 🏷️ **Categorias:** ${l.categorias}`);
     lines.push(`- 🕐 **Horários:** ${l.horario}`);
-    lines.push(`- 🗺️ **Google Maps:** ${l.googleMaps}`);
-    lines.push("");
-    let abordagem = "";
+    lines.push(`- 🗺️ **Google Maps:** ${l.googleMaps}\n`);
     const reviews = parseInt(l.reviews) || 0;
-    if (reviews < 20) {
-      abordagem = `_"Oi! Vi o ${l.nome} no Google e notei que vocês têm poucos reviews — posso te mostrar como dobrar isso em 30 dias. Posso enviar um diagnóstico grátis?"_`;
-    } else if (l.website === "—") {
-      abordagem = `_"Oi! Vi o ${l.nome} e notei que vocês ainda não têm site. Hoje 70% dos tutores pesquisam online antes de escolher petshop. Bora conversar?"_`;
-    } else {
-      abordagem = `_"Oi! Vi o ${l.nome} no Google e queria entender como vocês captam novos clientes hoje. Tenho uma estratégia específica para petshops. Posso mostrar em 15 min?"_`;
-    }
-    lines.push("**💬 Sugestão de abordagem:**");
-    lines.push(`> ${abordagem}`);
-    lines.push("\n---\n");
+    let ab = reviews < 20
+      ? `_"Oi! Vi o ${l.nome} no Google — poucos reviews. Posso mostrar como dobrar em 30 dias. Diagnóstico grátis?"_`
+      : l.website === "—"
+        ? `_"Oi! Vi o ${l.nome} e notei que não têm site. 70% dos clientes pesquisam online antes. Bora conversar?"_`
+        : `_"Oi! Vi o ${l.nome} no Google. Tenho uma estratégia específica pro seu segmento. Posso mostrar em 15 min?"_`;
+    lines.push(`**💬 Abordagem sugerida:**\n> ${ab}\n\n---\n`);
   });
   return lines.join("\n");
 }
