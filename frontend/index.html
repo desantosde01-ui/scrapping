@@ -1,367 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PetLeads — Gerador de Leads</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>LeadHunter — Gerador de Leads</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
-      --bg: #0d0f14;
-      --surface: #13161e;
-      --surface2: #1a1e28;
-      --border: #252a38;
-      --accent: #f97316;
-      --accent2: #fb923c;
-      --green: #22c55e;
-      --red: #ef4444;
-      --yellow: #eab308;
-      --text: #e8ecf4;
-      --muted: #6b7280;
-      --radius: 12px;
+      --bg:#080b12; --surface:#0f1320; --surface2:#161b2e; --border:#1e2540;
+      --accent:#6366f1; --accent2:#818cf8; --green:#22c55e; --red:#ef4444;
+      --yellow:#f59e0b; --text:#e2e8f0; --muted:#64748b; --r:10px;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      background-image: radial-gradient(ellipse at 20% 0%, rgba(249,115,22,0.07) 0%, transparent 60%),
-                        radial-gradient(ellipse at 80% 100%, rgba(249,115,22,0.04) 0%, transparent 50%);
-    }
-
-    /* ── HEADER ─────────────────────────────── */
-    header {
-      border-bottom: 1px solid var(--border);
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .logo-icon {
-      width: 42px; height: 42px;
-      background: linear-gradient(135deg, var(--accent), #ea580c);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-    }
-    .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
-    .logo-text span { color: var(--accent); }
-    .badge {
-      margin-left: auto;
-      background: rgba(249,115,22,0.12);
-      color: var(--accent2);
-      border: 1px solid rgba(249,115,22,0.25);
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    /* ── LAYOUT ─────────────────────────────── */
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 40px 24px;
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 28px;
-      align-items: start;
-    }
-
-    /* ── CARD ───────────────────────────────── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-    }
-    .card-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-title::before {
-      content: '';
-      display: inline-block;
-      width: 3px; height: 16px;
-      background: var(--accent);
-      border-radius: 2px;
-    }
-
-    /* ── FORM ───────────────────────────────── */
-    label {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 7px;
-    }
-    input, select {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      margin-bottom: 18px;
-      outline: none;
-      transition: border-color .2s;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-    input::placeholder { color: var(--muted); }
-
-    .cidades-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-    .cidade-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-      user-select: none;
-    }
-    .cidade-check:hover { border-color: var(--accent); }
-    .cidade-check.active {
-      border-color: var(--accent);
-      background: rgba(249,115,22,0.08);
-    }
-    .cidade-check input[type=checkbox] { display: none; }
-    .checkmark {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-radius: 4px;
-      flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
-    }
-    .cidade-check.active .checkmark {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-    .cidade-check.active .checkmark::after {
-      content: '✓';
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .cidade-name { font-size: 0.82rem; }
-
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    .btn {
-      width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, var(--accent), #ea580c);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: opacity .2s, transform .1s;
-      margin-top: 6px;
-    }
-    .btn:hover { opacity: 0.9; }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      margin-top: 10px;
-    }
-    .btn-outline:hover { background: rgba(249,115,22,0.1); opacity: 1; }
-
-    /* ── RIGHT COLUMN ───────────────────────── */
-    .right-col { display: flex; flex-direction: column; gap: 20px; }
-
-    /* ── STATUS CARD ────────────────────────── */
-    #status-card { display: none; }
-    .status-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .status-running { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
-    .status-done    { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
-    .status-error   { background: rgba(239,68,68,0.12); color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
-
-    .log-box {
-      background: #0a0c10;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
-      height: 200px;
-      overflow-y: auto;
-      font-family: 'Courier New', monospace;
-      font-size: 0.8rem;
-      line-height: 1.7;
-    }
-    .log-box::-webkit-scrollbar { width: 4px; }
-    .log-box::-webkit-scrollbar-track { background: transparent; }
-    .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .log-line { opacity: 0; animation: fadeIn .3s forwards; }
-    @keyframes fadeIn { to { opacity: 1; } }
-    .log-ok   { color: var(--green); }
-    .log-err  { color: var(--red); }
-    .log-done { color: var(--accent); font-weight: 700; }
-    .log-search { color: #60a5fa; }
-
-    /* ── RESULTS ────────────────────────────── */
-    #results-card { display: none; }
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .stat-box {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
-      text-align: center;
-    }
-    .stat-num {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-    }
-    .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-
-    .leads-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.83rem;
-    }
-    .leads-table th {
-      text-align: left;
-      padding: 10px 12px;
-      background: var(--surface2);
-      color: var(--muted);
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
-    }
-    .leads-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .leads-table tr:last-child td { border-bottom: none; }
-    .leads-table tr:hover td { background: rgba(255,255,255,0.02); }
-
-    .nota-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-    .nota-high { background: rgba(34,197,94,0.12); color: var(--green); }
-    .nota-mid  { background: rgba(234,179,8,0.12); color: var(--yellow); }
-    .nota-low  { background: rgba(239,68,68,0.12); color: var(--red); }
-
-    .site-link { color: var(--accent); text-decoration: none; font-size: 0.8rem; }
-    .site-link:hover { text-decoration: underline; }
-    .no-site { color: var(--muted); font-size: 0.8rem; }
-
-    .table-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
-    .table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
-    .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid rgba(249,115,22,0.2);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .empty-state {
-      text-align: center;
-      padding: 50px 20px;
-      color: var(--muted);
-    }
-    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
-    .empty-state p { font-size: 0.9rem; }
-
-    @media (max-width: 760px) {
-      .container { grid-template-columns: 1fr; }
-      header { padding: 16px 20px; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+      background-image:radial-gradient(ellipse at 10% 0%,rgba(99,102,241,.08) 0%,transparent 55%),
+                       radial-gradient(ellipse at 90% 100%,rgba(99,102,241,.05) 0%,transparent 50%);}
+    header{padding:18px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+    .logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:9px;
+      display:flex;align-items:center;justify-content:center;font-size:18px;}
+    .logo-txt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;}
+    .logo-txt span{color:var(--accent2);}
+    .hbadge{margin-left:auto;background:rgba(99,102,241,.12);color:var(--accent2);
+      border:1px solid rgba(99,102,241,.25);padding:3px 12px;border-radius:999px;font-size:.72rem;font-weight:600;}
+    .wrap{max-width:1200px;margin:0 auto;padding:32px 20px;display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;}
+    .card+.card{margin-top:20px;}
+    .ctitle{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;margin-bottom:18px;
+      display:flex;align-items:center;gap:8px;}
+    .ctitle::before{content:'';display:inline-block;width:3px;height:14px;background:var(--accent);border-radius:2px;}
+    label{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+    input,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+      padding:9px 13px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.88rem;margin-bottom:16px;outline:none;transition:border-color .2s;}
+    input:focus,select:focus{border-color:var(--accent);}
+    input::placeholder{color:var(--muted);}
+    .nichos-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px;}
+    .nicho-chip{padding:7px 10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);
+      font-size:.8rem;cursor:pointer;transition:all .2s;text-align:center;user-select:none;}
+    .nicho-chip:hover{border-color:var(--accent);}
+    .nicho-chip.active{background:rgba(99,102,241,.15);border-color:var(--accent);color:var(--accent2);}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .slider-wrap{margin-bottom:16px;}
+    .slider-label{display:flex;justify-content:space-between;margin-bottom:6px;}
+    .slider-val{font-weight:600;color:var(--accent2);}
+    input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;margin-bottom:0;padding:0;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .toggle-label{font-size:.85rem;}
+    .toggle{position:relative;width:42px;height:22px;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:22px;cursor:pointer;transition:.3s;}
+    .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+    .toggle input:checked+.toggle-slider{background:var(--accent);}
+    .toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
+    #map{height:260px;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;}
+    .map-hint{font-size:.75rem;color:var(--muted);margin-bottom:16px;}
+    .btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#4f46e5);color:white;
+      border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;
+      cursor:pointer;transition:opacity .2s,transform .1s;margin-top:4px;}
+    .btn:hover{opacity:.9;} .btn:active{transform:scale(.98);} .btn:disabled{opacity:.35;cursor:not-allowed;}
+    .btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent2);margin-top:10px;}
+    .btn-outline:hover{background:rgba(99,102,241,.1);opacity:1;}
+    .right{display:flex;flex-direction:column;gap:20px;}
+    #status-card{display:none;}
+    .s-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .sbadge{padding:3px 12px;border-radius:999px;font-size:.72rem;font-weight:600;}
+    .s-running{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3);}
+    .s-done{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25);}
+    .s-error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);}
+    .logbox{background:#050709;border:1px solid var(--border);border-radius:7px;padding:12px;
+      height:190px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.78rem;line-height:1.8;}
+    .logbox::-webkit-scrollbar{width:3px;}
+    .logbox::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    .ll{opacity:0;animation:fi .3s forwards;}
+    @keyframes fi{to{opacity:1;}}
+    .lok{color:var(--green);} .lerr{color:var(--red);} .ldone{color:var(--accent2);font-weight:700;} .lsearch{color:#60a5fa;}
+    #results-card{display:none;}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+    .sbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+    .snum{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--accent2);line-height:1;}
+    .slbl{font-size:.72rem;color:var(--muted);margin-top:4px;}
+    .twrap{overflow-x:auto;max-height:340px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
+    .twrap::-webkit-scrollbar{width:3px;height:3px;}
+    .twrap::-webkit-scrollbar-thumb{background:var(--border);}
+    table{width:100%;border-collapse:collapse;font-size:.81rem;}
+    th{text-align:left;padding:9px 11px;background:var(--surface2);color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+    td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;} tr:hover td{background:rgba(255,255,255,.02);}
+    .npill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:600;}
+    .nh{background:rgba(34,197,94,.1);color:var(--green);} .nm{background:rgba(245,158,11,.1);color:var(--yellow);} .nl{background:rgba(239,68,68,.1);color:var(--red);}
+    .alink{color:var(--accent2);text-decoration:none;font-size:.78rem;} .alink:hover{text-decoration:underline;}
+    .nodash{color:var(--muted);font-size:.78rem;}
+    .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(99,102,241,.2);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px;}
+    @keyframes sp{to{transform:rotate(360deg);}}
+    .empty{text-align:center;padding:50px 20px;color:var(--muted);}
+    .eico{font-size:2.8rem;margin-bottom:12px;}
+    @media(max-width:780px){.wrap{grid-template-columns:1fr;}header{padding:14px 18px;}}
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-icon">🐾</div>
-  <div class="logo-text">Pet<span>Leads</span></div>
-  <div class="badge">Powered by Apify</div>
+  <div class="logo">🎯</div>
+  <div class="logo-txt">Lead<span>Hunter</span></div>
+  <div class="hbadge">Powered by Apify + Supabase</div>
 </header>
 
-<div class="container">
-
-  <!-- ── LEFT: CONFIG ───────────────────── -->
+<div class="wrap">
   <div>
     <div class="card">
-      <div class="card-title">Configuração</div>
+      <div class="ctitle">Token Apify</div>
+      <label>API Token</label>
+      <input type="password" id="apiToken" placeholder="apify_api_..."/>
 
-      <label>Token da Apify API</label>
-      <input type="password" id="apiToken" placeholder="apify_api_..." />
+      <div class="ctitle">Nicho</div>
+      <label>Nichos rápidos</label>
+      <div class="nichos-grid" id="nichosGrid"></div>
+      <label>Ou digite um nicho personalizado</label>
+      <input type="text" id="nichoCustom" placeholder="Ex: clínica veterinária, academia, dentista..."/>
 
-      <label>Cidades para buscar</label>
-      <div class="cidades-grid" id="cidadesGrid"></div>
-
-      <label>Cidade personalizada (opcional)</label>
-      <input type="text" id="cidadeCustom" placeholder="Ex: Ribeirão Preto, SP" />
-
-      <div class="row">
-        <div>
-          <label>Máx. por busca</label>
-          <select id="maxResultados">
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-          </select>
+      <div class="ctitle">Quantidade e Filtros</div>
+      <div class="slider-wrap">
+        <div class="slider-label">
+          <label style="margin:0">Quantidade de leads</label>
+          <span class="slider-val" id="qtdVal">20</span>
         </div>
+        <input type="range" id="qtdSlider" min="5" max="100" step="5" value="20" oninput="document.getElementById('qtdVal').textContent=this.value"/>
+      </div>
+      <div class="row2">
         <div>
           <label>Nota mínima</label>
           <select id="notaMinima">
@@ -372,243 +139,231 @@
             <option value="4.5">4.5+</option>
           </select>
         </div>
+        <div>
+          <label>Raio inicial</label>
+          <select id="raioInicial">
+            <option value="2000">2 km</option>
+            <option value="5000" selected>5 km</option>
+            <option value="10000">10 km</option>
+            <option value="20000">20 km</option>
+            <option value="50000">50 km</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">🔄 Expandir raio automaticamente</span>
+        <label class="toggle">
+          <input type="checkbox" id="autoExpandir" checked/>
+          <span class="toggle-slider"></span>
+        </label>
       </div>
 
-      <button class="btn" id="btnScrape" onclick="startScraping()">
-        🚀 Iniciar Scraping
-      </button>
+      <div class="ctitle">Área de busca</div>
+      <div id="map"></div>
+      <p class="map-hint">📍 Clique no mapa para definir o centro. O círculo mostra o raio selecionado.</p>
+
+      <button class="btn" id="btnScrape" onclick="startScraping()">🚀 Iniciar Busca de Leads</button>
     </div>
   </div>
 
-  <!-- ── RIGHT: LOG + RESULTS ───────────── -->
-  <div class="right-col">
-
-    <!-- Empty state -->
+  <div class="right">
     <div class="card" id="empty-card">
-      <div class="empty-state">
-        <div class="icon">🐕</div>
-        <p>Configure as opções ao lado e clique em<br/><strong>Iniciar Scraping</strong> para coletar leads.</p>
+      <div class="empty">
+        <div class="eico">🎯</div>
+        <p>Configure o nicho, quantidade e área de busca.<br/>Clique em <strong>Iniciar Busca</strong> para começar.</p>
       </div>
     </div>
 
-    <!-- Status card -->
     <div class="card" id="status-card">
-      <div class="status-header">
-        <div class="card-title" style="margin:0">Progresso</div>
-        <span class="status-badge status-running" id="statusBadge">
-          <span class="spinner"></span> Rodando...
-        </span>
+      <div class="s-header">
+        <div class="ctitle" style="margin:0">Progresso</div>
+        <span class="sbadge s-running" id="sbadge"><span class="spin"></span>Rodando...</span>
       </div>
-      <div class="log-box" id="logBox"></div>
+      <div class="logbox" id="logbox"></div>
     </div>
 
-    <!-- Results card -->
     <div class="card" id="results-card">
-      <div class="card-title">Leads Coletados</div>
-
-      <div class="stats-row">
-        <div class="stat-box">
-          <div class="stat-num" id="statTotal">0</div>
-          <div class="stat-label">Total de Leads</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="statComSite">0</div>
-          <div class="stat-label">Com Website</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="statTopNota">—</div>
-          <div class="stat-label">Nota Média</div>
-        </div>
+      <div class="ctitle">Leads Encontrados</div>
+      <div class="stats">
+        <div class="sbox"><div class="snum" id="stTotal">0</div><div class="slbl">Total</div></div>
+        <div class="sbox"><div class="snum" id="stSite">0</div><div class="slbl">Com Site</div></div>
+        <div class="sbox"><div class="snum" id="stNota">—</div><div class="slbl">Nota Média</div></div>
       </div>
-
-      <div class="table-wrap">
-        <table class="leads-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nome</th>
-              <th>Cidade</th>
-              <th>Telefone</th>
-              <th>Nota</th>
-              <th>Reviews</th>
-              <th>Site</th>
-            </tr>
-          </thead>
-          <tbody id="leadsTableBody"></tbody>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>Tel</th><th>Nota</th><th>Reviews</th><th>Site</th></tr></thead>
+          <tbody id="tbody"></tbody>
         </table>
       </div>
-
-      <button class="btn btn-outline" id="btnDownload" onclick="downloadMd()">
-        ⬇️ Baixar leads_petshop.md
-      </button>
+      <button class="btn btn-outline" onclick="downloadMd()">⬇️ Baixar .md completo</button>
     </div>
-
   </div>
 </div>
 
 <script>
-  const CIDADES = [
-    "São Paulo, SP","Rio de Janeiro, RJ","Campinas, SP",
-    "Curitiba, PR","Belo Horizonte, MG","Porto Alegre, RS",
-    "Florianópolis, SC","Goiânia, GO","Recife, PE","Salvador, BA",
-  ];
+const NICHOS = [
+  {label:"🐾 Petshop",     q:"petshop banho e tosa"},
+  {label:"🦷 Dentista",    q:"clínica odontológica"},
+  {label:"🏋️ Academia",   q:"academia de ginástica"},
+  {label:"🍕 Restaurante", q:"restaurante"},
+  {label:"💈 Barbearia",   q:"barbearia"},
+  {label:"🌿 Estética",    q:"clínica de estética"},
+  {label:"🐕 Veterinária", q:"clínica veterinária"},
+  {label:"🧹 Limpeza",     q:"empresa de limpeza"},
+  {label:"📸 Fotógrafo",   q:"fotógrafo profissional"},
+  {label:"🔧 Mecânica",    q:"oficina mecânica"},
+];
 
-  let selectedCidades = new Set(["São Paulo, SP","Campinas, SP","Curitiba, PR"]);
-  let currentJobId = null;
-  let pollInterval = null;
+let nichoSelecionado = "";
+let currentJobId = null;
+let pollInterval = null;
+let lastLogCount = 0;
+let mapLat = null, mapLng = null;
+let mapCircle = null, mapMarker = null;
 
-  // ── Render cidade checkboxes ──────────────────
-  function renderCidades() {
-    const grid = document.getElementById("cidadesGrid");
-    grid.innerHTML = CIDADES.map(c => `
-      <div class="cidade-check ${selectedCidades.has(c) ? 'active' : ''}" onclick="toggleCidade('${c}', this)">
-        <input type="checkbox" ${selectedCidades.has(c) ? 'checked' : ''} />
-        <div class="checkmark"></div>
-        <span class="cidade-name">${c.split(',')[0]}</span>
-      </div>
-    `).join('');
-  }
+function renderNichos() {
+  document.getElementById("nichosGrid").innerHTML = NICHOS.map(n =>
+    `<div class="nicho-chip" onclick="selectNicho('${n.q}',this)">${n.label}</div>`
+  ).join('');
+}
 
-  function toggleCidade(cidade, el) {
-    if (selectedCidades.has(cidade)) {
-      selectedCidades.delete(cidade);
-      el.classList.remove('active');
-    } else {
-      selectedCidades.add(cidade);
-      el.classList.add('active');
-    }
-  }
+function selectNicho(q, el) {
+  document.querySelectorAll('.nicho-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  nichoSelecionado = q;
+  document.getElementById('nichoCustom').value = '';
+}
 
-  // ── Start scraping ────────────────────────────
-  async function startScraping() {
-    const apiToken = document.getElementById("apiToken").value.trim();
-    const cidadeCustom = document.getElementById("cidadeCustom").value.trim();
-    const maxResultados = parseInt(document.getElementById("maxResultados").value);
-    const notaMinima = parseFloat(document.getElementById("notaMinima").value);
+const map = L.map('map').setView([-23.55, -46.63], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 
-    if (!apiToken) return alert("Por favor, insira o Token da Apify.");
+function updateCircle(lat, lng) {
+  const raio = parseInt(document.getElementById('raioInicial').value);
+  if (mapMarker) map.removeLayer(mapMarker);
+  if (mapCircle) map.removeLayer(mapCircle);
+  mapMarker = L.marker([lat, lng]).addTo(map);
+  mapCircle = L.circle([lat, lng], {radius: raio, color:'#6366f1', fillColor:'#6366f1', fillOpacity:.12, weight:2}).addTo(map);
+  mapLat = lat; mapLng = lng;
+}
 
-    const cidades = [...selectedCidades];
-    if (cidadeCustom) cidades.push(cidadeCustom);
-    if (cidades.length === 0) return alert("Selecione pelo menos uma cidade.");
+map.on('click', e => updateCircle(e.latlng.lat, e.latlng.lng));
+document.getElementById('raioInicial').addEventListener('change', () => {
+  if (mapLat && mapLng) updateCircle(mapLat, mapLng);
+});
 
-    // UI
-    document.getElementById("empty-card").style.display = "none";
-    document.getElementById("status-card").style.display = "block";
-    document.getElementById("results-card").style.display = "none";
-    document.getElementById("logBox").innerHTML = "";
-    document.getElementById("btnScrape").disabled = true;
-    setStatusBadge("running");
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(p => {
+    map.setView([p.coords.latitude, p.coords.longitude], 12);
+    updateCircle(p.coords.latitude, p.coords.longitude);
+  });
+}
 
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken, cidades, maxResultados, notaMinima }),
-      });
-      const data = await res.json();
-      if (!data.jobId) throw new Error(data.error || "Erro ao iniciar job.");
-      currentJobId = data.jobId;
-      startPolling();
-    } catch (e) {
-      addLog("❌ Erro: " + e.message, "err");
-      setStatusBadge("error");
-      document.getElementById("btnScrape").disabled = false;
-    }
-  }
+async function startScraping() {
+  const apiToken = document.getElementById('apiToken').value.trim();
+  const nichoCustom = document.getElementById('nichoCustom').value.trim();
+  const nicho = nichoCustom || nichoSelecionado;
+  const quantidade = parseInt(document.getElementById('qtdSlider').value);
+  const notaMinima = parseFloat(document.getElementById('notaMinima').value);
+  const raioInicial = parseInt(document.getElementById('raioInicial').value);
+  const autoExpandir = document.getElementById('autoExpandir').checked;
 
-  // ── Polling ───────────────────────────────────
-  let lastLogCount = 0;
+  if (!apiToken) return alert('Por favor, insira o Token da Apify.');
+  if (!nicho) return alert('Selecione ou digite um nicho.');
 
-  function startPolling() {
-    lastLogCount = 0;
+  document.getElementById('empty-card').style.display = 'none';
+  document.getElementById('status-card').style.display = 'block';
+  document.getElementById('results-card').style.display = 'none';
+  document.getElementById('logbox').innerHTML = '';
+  document.getElementById('btnScrape').disabled = true;
+  setBadge('running');
+  lastLogCount = 0;
+
+  try {
+    const body = { apiToken, nicho, quantidade, notaMinima, raioInicial, autoExpandir };
+    if (mapLat && mapLng) { body.lat = mapLat; body.lng = mapLng; }
+    const res = await fetch('/api/scrape', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.jobId) throw new Error(data.error || 'Erro ao iniciar.');
+    currentJobId = data.jobId;
     pollInterval = setInterval(pollJob, 2500);
+  } catch(e) {
+    addLog('❌ ' + e.message, 'err');
+    setBadge('error');
+    document.getElementById('btnScrape').disabled = false;
   }
+}
 
-  async function pollJob() {
-    try {
-      const res = await fetch(`/api/job/${currentJobId}`);
-      const job = await res.json();
-
-      // Add new log lines
-      const newLogs = job.progress.slice(lastLogCount);
-      newLogs.forEach(p => addLog(p.msg, p.type));
-      lastLogCount = job.progress.length;
-
-      if (job.status === "done") {
-        clearInterval(pollInterval);
-        setStatusBadge("done");
-        document.getElementById("btnScrape").disabled = false;
-        renderResults(job.leads);
-      } else if (job.status === "error") {
-        clearInterval(pollInterval);
-        setStatusBadge("error");
-        addLog("❌ " + job.error, "err");
-        document.getElementById("btnScrape").disabled = false;
-      }
-    } catch (e) {
-      addLog("⚠️ Erro ao verificar status.", "err");
+async function pollJob() {
+  try {
+    const res = await fetch(`/api/job/${currentJobId}`);
+    const job = await res.json();
+    job.progress.slice(lastLogCount).forEach(p => addLog(p.msg, p.type));
+    lastLogCount = job.progress.length;
+    if (job.status === 'done') {
+      clearInterval(pollInterval);
+      setBadge('done');
+      document.getElementById('btnScrape').disabled = false;
+      renderResults(job.leads);
+    } else if (job.status === 'error') {
+      clearInterval(pollInterval);
+      setBadge('error');
+      addLog('❌ ' + job.error, 'err');
+      document.getElementById('btnScrape').disabled = false;
     }
-  }
+  } catch(e) { addLog('⚠️ Erro ao verificar status.', 'err'); }
+}
 
-  function addLog(msg, type) {
-    const box = document.getElementById("logBox");
-    const line = document.createElement("div");
-    line.className = `log-line log-${type}`;
-    line.textContent = msg;
-    box.appendChild(line);
-    box.scrollTop = box.scrollHeight;
-  }
+function addLog(msg, type) {
+  const box = document.getElementById('logbox');
+  const d = document.createElement('div');
+  d.className = `ll l${type}`;
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
 
-  function setStatusBadge(state) {
-    const badge = document.getElementById("statusBadge");
-    badge.className = `status-badge status-${state}`;
-    if (state === "running") badge.innerHTML = `<span class="spinner"></span> Rodando...`;
-    else if (state === "done")  badge.textContent = "✅ Concluído";
-    else if (state === "error") badge.textContent = "❌ Erro";
-  }
+function setBadge(s) {
+  const b = document.getElementById('sbadge');
+  b.className = `sbadge s-${s}`;
+  if (s==='running') b.innerHTML = '<span class="spin"></span>Rodando...';
+  else if (s==='done') b.textContent = '✅ Concluído';
+  else b.textContent = '❌ Erro';
+}
 
-  // ── Render results ────────────────────────────
-  function renderResults(leads) {
-    document.getElementById("results-card").style.display = "block";
+function renderResults(leads) {
+  document.getElementById('results-card').style.display = 'block';
+  const comSite = leads.filter(l => l.website && l.website !== '—').length;
+  const notas = leads.map(l => parseFloat(l.nota)).filter(n => !isNaN(n) && n > 0);
+  const media = notas.length ? (notas.reduce((a,b) => a+b, 0) / notas.length).toFixed(1) : '—';
+  document.getElementById('stTotal').textContent = leads.length;
+  document.getElementById('stSite').textContent = comSite;
+  document.getElementById('stNota').textContent = media;
+  document.getElementById('tbody').innerHTML = leads.map((l, i) => {
+    const n = parseFloat(l.nota);
+    const nc = n >= 4 ? 'nh' : n >= 3.5 ? 'nm' : 'nl';
+    const npill = n ? `<span class="npill ${nc}">⭐ ${n}</span>` : '—';
+    const site = l.website && l.website !== '—'
+      ? `<a class="alink" href="${l.website}" target="_blank">🔗 site</a>`
+      : `<span class="nodash">—</span>`;
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td><strong>${l.nome}</strong></td>
+      <td style="color:var(--muted)">${l.cidade}</td>
+      <td>${l.telefone}</td>
+      <td>${npill}</td>
+      <td style="color:var(--muted)">${l.reviews}</td>
+      <td>${site}</td>
+    </tr>`;
+  }).join('');
+}
 
-    const comSite = leads.filter(l => l.website && l.website !== "—").length;
-    const notas = leads.map(l => parseFloat(l.nota)).filter(n => !isNaN(n) && n > 0);
-    const mediaNotas = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1) : "—";
+function downloadMd() {
+  if (currentJobId) window.location.href = `/api/job/${currentJobId}/download`;
+}
 
-    document.getElementById("statTotal").textContent = leads.length;
-    document.getElementById("statComSite").textContent = comSite;
-    document.getElementById("statTopNota").textContent = mediaNotas;
-
-    const tbody = document.getElementById("leadsTableBody");
-    tbody.innerHTML = leads.map((l, i) => {
-      const nota = parseFloat(l.nota);
-      const notaClass = nota >= 4 ? "nota-high" : nota >= 3.5 ? "nota-mid" : "nota-low";
-      const notaHtml = nota ? `<span class="nota-pill ${notaClass}">⭐ ${nota}</span>` : "—";
-      const siteHtml = l.website && l.website !== "—"
-        ? `<a class="site-link" href="${l.website}" target="_blank">🔗 site</a>`
-        : `<span class="no-site">—</span>`;
-      return `
-        <tr>
-          <td style="color:var(--muted)">${i+1}</td>
-          <td><strong>${l.nome}</strong></td>
-          <td style="color:var(--muted)">${l.cidade}</td>
-          <td>${l.telefone}</td>
-          <td>${notaHtml}</td>
-          <td style="color:var(--muted)">${l.reviews}</td>
-          <td>${siteHtml}</td>
-        </tr>`;
-    }).join('');
-  }
-
-  // ── Download MD ───────────────────────────────
-  async function downloadMd() {
-    if (!currentJobId) return;
-    window.location.href = `/api/job/${currentJobId}/download`;
-  }
-
-  // ── Init ──────────────────────────────────────
-  renderCidades();
+renderNichos();
 </script>
 </body>
 </html>
