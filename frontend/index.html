@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PetLeads — Gerador de Leads</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e28;
+      --border: #252a38;
+      --accent: #f97316;
+      --accent2: #fb923c;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --text: #e8ecf4;
+      --muted: #6b7280;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image: radial-gradient(ellipse at 20% 0%, rgba(249,115,22,0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 100%, rgba(249,115,22,0.04) 0%, transparent 50%);
+    }
+
+    /* ── HEADER ─────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), #ea580c);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
+    .logo-text span { color: var(--accent); }
+    .badge {
+      margin-left: auto;
+      background: rgba(249,115,22,0.12);
+      color: var(--accent2);
+      border: 1px solid rgba(249,115,22,0.25);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* ── LAYOUT ─────────────────────────────── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ── CARD ───────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* ── FORM ───────────────────────────────── */
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 7px;
+    }
+    input, select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .cidades-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .cidade-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      user-select: none;
+    }
+    .cidade-check:hover { border-color: var(--accent); }
+    .cidade-check.active {
+      border-color: var(--accent);
+      background: rgba(249,115,22,0.08);
+    }
+    .cidade-check input[type=checkbox] { display: none; }
+    .checkmark {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .cidade-check.active .checkmark {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .cidade-check.active .checkmark::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .cidade-name { font-size: 0.82rem; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent), #ea580c);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      margin-top: 6px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      margin-top: 10px;
+    }
+    .btn-outline:hover { background: rgba(249,115,22,0.1); opacity: 1; }
+
+    /* ── RIGHT COLUMN ───────────────────────── */
+    .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── STATUS CARD ────────────────────────── */
+    #status-card { display: none; }
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-running { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+    .status-done    { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .status-error   { background: rgba(239,68,68,0.12); color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
+
+    .log-box {
+      background: #0a0c10;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+    }
+    .log-box::-webkit-scrollbar { width: 4px; }
+    .log-box::-webkit-scrollbar-track { background: transparent; }
+    .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .log-line { opacity: 0; animation: fadeIn .3s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .log-ok   { color: var(--green); }
+    .log-err  { color: var(--red); }
+    .log-done { color: var(--accent); font-weight: 700; }
+    .log-search { color: #60a5fa; }
+
+    /* ── RESULTS ────────────────────────────── */
+    #results-card { display: none; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    .leads-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+    }
+    .leads-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .leads-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .leads-table tr:last-child td { border-bottom: none; }
+    .leads-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .nota-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .nota-high { background: rgba(34,197,94,0.12); color: var(--green); }
+    .nota-mid  { background: rgba(234,179,8,0.12); color: var(--yellow); }
+    .nota-low  { background: rgba(239,68,68,0.12); color: var(--red); }
+
+    .site-link { color: var(--accent); text-decoration: none; font-size: 0.8rem; }
+    .site-link:hover { text-decoration: underline; }
+    .no-site { color: var(--muted); font-size: 0.8rem; }
+
+    .table-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border); }
+    .table-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(249,115,22,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    @media (max-width: 760px) {
+      .container { grid-template-columns: 1fr; }
+      header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🐾</div>
+  <div class="logo-text">Pet<span>Leads</span></div>
+  <div class="badge">Powered by Apify</div>
+</header>
+
+<div class="container">
+
+  <!-- ── LEFT: CONFIG ───────────────────── -->
+  <div>
+    <div class="card">
+      <div class="card-title">Configuração</div>
+
+      <label>Token da Apify API</label>
+      <input type="password" id="apiToken" placeholder="apify_api_..." />
+
+      <label>Cidades para buscar</label>
+      <div class="cidades-grid" id="cidadesGrid"></div>
+
+      <label>Cidade personalizada (opcional)</label>
+      <input type="text" id="cidadeCustom" placeholder="Ex: Ribeirão Preto, SP" />
+
+      <div class="row">
+        <div>
+          <label>Máx. por busca</label>
+          <select id="maxResultados">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div>
+          <label>Nota mínima</label>
+          <select id="notaMinima">
+            <option value="0">Sem filtro</option>
+            <option value="3">3.0+</option>
+            <option value="3.5" selected>3.5+</option>
+            <option value="4">4.0+</option>
+            <option value="4.5">4.5+</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn" id="btnScrape" onclick="startScraping()">
+        🚀 Iniciar Scraping
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: LOG + RESULTS ───────────── -->
+  <div class="right-col">
+
+    <!-- Empty state -->
+    <div class="card" id="empty-card">
+      <div class="empty-state">
+        <div class="icon">🐕</div>
+        <p>Configure as opções ao lado e clique em<br/><strong>Iniciar Scraping</strong> para coletar leads.</p>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="card" id="status-card">
+      <div class="status-header">
+        <div class="card-title" style="margin:0">Progresso</div>
+        <span class="status-badge status-running" id="statusBadge">
+          <span class="spinner"></span> Rodando...
+        </span>
+      </div>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <!-- Results card -->
+    <div class="card" id="results-card">
+      <div class="card-title">Leads Coletados</div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">Total de Leads</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statComSite">0</div>
+          <div class="stat-label">Com Website</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statTopNota">—</div>
+          <div class="stat-label">Nota Média</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>Cidade</th>
+              <th>Telefone</th>
+              <th>Nota</th>
+              <th>Reviews</th>
+              <th>Site</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody"></tbody>
+        </table>
+      </div>
+
+      <button class="btn btn-outline" id="btnDownload" onclick="downloadMd()">
+        ⬇️ Baixar leads_petshop.md
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const CIDADES = [
+    "São Paulo, SP","Rio de Janeiro, RJ","Campinas, SP",
+    "Curitiba, PR","Belo Horizonte, MG","Porto Alegre, RS",
+    "Florianópolis, SC","Goiânia, GO","Recife, PE","Salvador, BA",
+  ];
+
+  let selectedCidades = new Set(["São Paulo, SP","Campinas, SP","Curitiba, PR"]);
+  let currentJobId = null;
+  let pollInterval = null;
+
+  // ── Render cidade checkboxes ──────────────────
+  function renderCidades() {
+    const grid = document.getElementById("cidadesGrid");
+    grid.innerHTML = CIDADES.map(c => `
+      <div class="cidade-check ${selectedCidades.has(c) ? 'active' : ''}" onclick="toggleCidade('${c}', this)">
+        <input type="checkbox" ${selectedCidades.has(c) ? 'checked' : ''} />
+        <div class="checkmark"></div>
+        <span class="cidade-name">${c.split(',')[0]}</span>
+      </div>
+    `).join('');
+  }
+
+  function toggleCidade(cidade, el) {
+    if (selectedCidades.has(cidade)) {
+      selectedCidades.delete(cidade);
+      el.classList.remove('active');
+    } else {
+      selectedCidades.add(cidade);
+      el.classList.add('active');
+    }
+  }
+
+  // ── Start scraping ────────────────────────────
+  async function startScraping() {
+    const apiToken = document.getElementById("apiToken").value.trim();
+    const cidadeCustom = document.getElementById("cidadeCustom").value.trim();
+    const maxResultados = parseInt(document.getElementById("maxResultados").value);
+    const notaMinima = parseFloat(document.getElementById("notaMinima").value);
+
+    if (!apiToken) return alert("Por favor, insira o Token da Apify.");
+
+    const cidades = [...selectedCidades];
+    if (cidadeCustom) cidades.push(cidadeCustom);
+    if (cidades.length === 0) return alert("Selecione pelo menos uma cidade.");
+
+    // UI
+    document.getElementById("empty-card").style.display = "none";
+    document.getElementById("status-card").style.display = "block";
+    document.getElementById("results-card").style.display = "none";
+    document.getElementById("logBox").innerHTML = "";
+    document.getElementById("btnScrape").disabled = true;
+    setStatusBadge("running");
+
+    try {
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiToken, cidades, maxResultados, notaMinima }),
+      });
+      const data = await res.json();
+      if (!data.jobId) throw new Error(data.error || "Erro ao iniciar job.");
+      currentJobId = data.jobId;
+      startPolling();
+    } catch (e) {
+      addLog("❌ Erro: " + e.message, "err");
+      setStatusBadge("error");
+      document.getElementById("btnScrape").disabled = false;
+    }
+  }
+
+  // ── Polling ───────────────────────────────────
+  let lastLogCount = 0;
+
+  function startPolling() {
+    lastLogCount = 0;
+    pollInterval = setInterval(pollJob, 2500);
+  }
+
+  async function pollJob() {
+    try {
+      const res = await fetch(`/api/job/${currentJobId}`);
+      const job = await res.json();
+
+      // Add new log lines
+      const newLogs = job.progress.slice(lastLogCount);
+      newLogs.forEach(p => addLog(p.msg, p.type));
+      lastLogCount = job.progress.length;
+
+      if (job.status === "done") {
+        clearInterval(pollInterval);
+        setStatusBadge("done");
+        document.getElementById("btnScrape").disabled = false;
+        renderResults(job.leads);
+      } else if (job.status === "error") {
+        clearInterval(pollInterval);
+        setStatusBadge("error");
+        addLog("❌ " + job.error, "err");
+        document.getElementById("btnScrape").disabled = false;
+      }
+    } catch (e) {
+      addLog("⚠️ Erro ao verificar status.", "err");
+    }
+  }
+
+  function addLog(msg, type) {
+    const box = document.getElementById("logBox");
+    const line = document.createElement("div");
+    line.className = `log-line log-${type}`;
+    line.textContent = msg;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setStatusBadge(state) {
+    const badge = document.getElementById("statusBadge");
+    badge.className = `status-badge status-${state}`;
+    if (state === "running") badge.innerHTML = `<span class="spinner"></span> Rodando...`;
+    else if (state === "done")  badge.textContent = "✅ Concluído";
+    else if (state === "error") badge.textContent = "❌ Erro";
+  }
+
+  // ── Render results ────────────────────────────
+  function renderResults(leads) {
+    document.getElementById("results-card").style.display = "block";
+
+    const comSite = leads.filter(l => l.website && l.website !== "—").length;
+    const notas = leads.map(l => parseFloat(l.nota)).filter(n => !isNaN(n) && n > 0);
+    const mediaNotas = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1) : "—";
+
+    document.getElementById("statTotal").textContent = leads.length;
+    document.getElementById("statComSite").textContent = comSite;
+    document.getElementById("statTopNota").textContent = mediaNotas;
+
+    const tbody = document.getElementById("leadsTableBody");
+    tbody.innerHTML = leads.map((l, i) => {
+      const nota = parseFloat(l.nota);
+      const notaClass = nota >= 4 ? "nota-high" : nota >= 3.5 ? "nota-mid" : "nota-low";
+      const notaHtml = nota ? `<span class="nota-pill ${notaClass}">⭐ ${nota}</span>` : "—";
+      const siteHtml = l.website && l.website !== "—"
+        ? `<a class="site-link" href="${l.website}" target="_blank">🔗 site</a>`
+        : `<span class="no-site">—</span>`;
+      return `
+        <tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td><strong>${l.nome}</strong></td>
+          <td style="color:var(--muted)">${l.cidade}</td>
+          <td>${l.telefone}</td>
+          <td>${notaHtml}</td>
+          <td style="color:var(--muted)">${l.reviews}</td>
+          <td>${siteHtml}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Download MD ───────────────────────────────
+  async function downloadMd() {
+    if (!currentJobId) return;
+    window.location.href = `/api/job/${currentJobId}/download`;
+  }
+
+  // ── Init ──────────────────────────────────────
+  renderCidades();
+</script>
+</body>
+</html>
