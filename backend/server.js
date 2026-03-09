@@ -8,10 +8,42 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
+const SUPABASE_URL = "https://gducplygsupgztgublqh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkdWNwbHlnc3VwZ3p0Z3VibHFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzQ5ODUsImV4cCI6MjA4ODMxMDk4NX0.yyriwmRGq6PLgcyH7DyEd34nh2cAdHfw8EHwYt8TTnA";
+
 const jobs = {};
 
 function generateJobId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+async function upsertLeadsSupabase(leads) {
+  const rows = leads.map(l => ({
+    placeId: l.placeId,
+    title: l.nome,
+    rating: l.nota !== "—" ? String(l.nota) : null,
+    reviewCount: l.reviews ? String(l.reviews) : null,
+    category: l.categorias !== "—" ? l.categorias : null,
+    address: l.endereco !== "—" ? `${l.endereco}, ${l.cidade}` : null,
+    website: l.website !== "—" ? l.website : null,
+  }));
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Prefer": "resolution=ignore-duplicates",
+    },
+    body: JSON.stringify(rows),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase erro: ${err}`);
+  }
+  return rows.length;
 }
 
 app.post("/api/scrape", async (req, res) => {
@@ -42,7 +74,6 @@ app.get("/api/job/:jobId/download", (req, res) => {
 
 async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) {
   const client = new ApifyClient({ token: apiToken });
-  // ✅ Apenas 1 termo — reduz custo em 3x
   const termos = ["petshop banho e tosa"];
   const todosItens = [];
 
@@ -67,8 +98,19 @@ async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) 
         }
       }
     }
+
     const leads = extractLeads(todosItens, notaMinima);
     leads.sort((a, b) => (parseFloat(b.nota) || 0) - (parseFloat(a.nota) || 0));
+
+    // Salvar no Supabase
+    jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
+    try {
+      await upsertLeadsSupabase(leads);
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ Leads salvos no Supabase! Duplicatas ignoradas automaticamente.`, ts: new Date() });
+    } catch (e) {
+      jobs[jobId].progress.push({ type: "err", msg: `❌ Erro ao salvar no Supabase: ${e.message}`, ts: new Date() });
+    }
+
     jobs[jobId].leads = leads;
     jobs[jobId].status = "done";
     jobs[jobId].progress.push({ type: "done", msg: `🎉 Concluído! ${leads.length} leads coletados.`, ts: new Date() });
@@ -92,6 +134,7 @@ function extractLeads(itens, notaMinima) {
       : "—";
     const categorias = Array.isArray(item.categories) ? item.categories.join(", ") : "—";
     leads.push({
+      placeId,
       nome: item.title || item.name || "Sem nome",
       endereco: item.address || item.street || "—",
       cidade: item.city || "—",
