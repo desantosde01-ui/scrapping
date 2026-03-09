@@ -19,7 +19,7 @@ function generateJobId() {
 
 async function upsertLeadsSupabase(leads) {
   const rows = leads.map(l => ({
-    placeId: l.placeId,
+    placeUrl: l.placeId,
     title: l.nome,
     rating: l.nota !== "—" ? String(l.nota) : null,
     reviewCount: l.reviews ? String(l.reviews) : null,
@@ -102,7 +102,6 @@ async function runScraping(jobId, apiToken, cidades, maxResultados, notaMinima) 
     const leads = extractLeads(todosItens, notaMinima);
     leads.sort((a, b) => (parseFloat(b.nota) || 0) - (parseFloat(a.nota) || 0));
 
-    // Salvar no Supabase
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
       await upsertLeadsSupabase(leads);
