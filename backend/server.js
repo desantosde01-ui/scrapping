@@ -8,6 +8,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
+const APIFY_TOKEN = "apify_api_NmK3FhpvYdRCfcTCeA0g0KFSMqf6q5132MIN";
 const SUPABASE_URL = "https://gducplygsupgztgublqh.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkdWNwbHlnc3VwZ3p0Z3VibHFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzQ5ODUsImV4cCI6MjA4ODMxMDk4NX0.yyriwmRGq6PLgcyH7DyEd34nh2cAdHfw8EHwYt8TTnA";
 
@@ -49,18 +50,18 @@ async function upsertLeadsSupabase(leads) {
 
 app.post("/api/scrape", async (req, res) => {
   const {
-    apiToken, nicho, quantidade = 20, notaMinima = 3.5,
+    nicho, quantidade = 20, notaMinima = 3.5,
     lat, lng, raioInicial = 5000, autoExpandir = true,
   } = req.body;
 
-  if (!apiToken || !nicho) {
-    return res.status(400).json({ error: "apiToken e nicho são obrigatórios." });
+  if (!nicho) {
+    return res.status(400).json({ error: "Nicho é obrigatório." });
   }
 
   const jobId = generateJobId();
   jobs[jobId] = { status: "running", progress: [], leads: [], error: null, startedAt: new Date(), nicho };
   res.json({ jobId });
-  runScraping(jobId, apiToken, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir);
+  runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir);
 });
 
 app.get("/api/job/:jobId", (req, res) => {
@@ -87,8 +88,8 @@ function raioParaZoom(raioMetros) {
   return 10;
 }
 
-async function runScraping(jobId, apiToken, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir) {
-  const client = new ApifyClient({ token: apiToken });
+async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir) {
+  const client = new ApifyClient({ token: APIFY_TOKEN });
   const todosItens = [];
   const raiosExpansao = [raioInicial, 10000, 20000, 50000].filter(r => r >= raioInicial);
 
