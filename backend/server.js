@@ -26,6 +26,7 @@ async function upsertLeadsSupabase(leads) {
     category: l.categorias !== "—" ? l.categorias : null,
     address: l.endereco !== "—" ? `${l.endereco}, ${l.cidade}` : null,
     website: l.website !== "—" ? l.website : null,
+    phoneNumber: l.telefone !== "—" ? l.telefone : null,
   }));
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
@@ -174,7 +175,7 @@ function extractLeads(itens, notaMinima) {
       nome: item.title || item.name || "Sem nome",
       endereco: item.address || item.street || "—",
       cidade: item.city || "—",
-      telefone: (item.phone || item.phoneUnformatted || "—").trim(),
+      telefone: (item.phone || item.phoneUnformatted || item.phoneNumber || "—").trim(),
       website: item.website || "—",
       nota: nota || "—",
       reviews: item.reviewsCount || item.totalReviews || 0,
