@@ -124,7 +124,7 @@
     .tslider:before { content:''; position:absolute; width:10px; height:10px; left:4px; top:4px; background:var(--g2); transition:.2s; }
     .toggle input:checked + .tslider { background: var(--r2); border: 1px solid var(--r); }
     .toggle input:checked + .tslider:before { transform: translateX(18px); background: var(--r); }
-    #map { height: 200px; border: 1px solid var(--g3); margin-bottom: 8px; filter: grayscale(1) brightness(0.4) contrast(1.2); }
+    #map { height: 200px; border: 1px solid var(--g3); margin-bottom: 8px; }
     .mhint { font-size:.55rem; letter-spacing:.1em; color:var(--g3); margin-bottom:14px; text-transform:uppercase; }
     .btn-exec {
       width: 100%; padding: 14px; background: var(--r); color: var(--g1);
@@ -202,8 +202,8 @@
     .nd { color:var(--g3); }
     .spin { display:inline-block; width:10px; height:10px; border:1px solid var(--g3); border-top-color:var(--r); animation:sp .6s linear infinite; vertical-align:middle; margin-right:6px; }
     @keyframes sp { to { transform:rotate(360deg); } }
-    .leaflet-container { background:#080808; }
-    .leaflet-tile { filter:grayscale(1) brightness(.3); }
+    .leaflet-container { background:#111; }
+    .leaflet-tile { filter:grayscale(1) brightness(.7) contrast(1.1); }
     .leaflet-control-zoom a { background:var(--g4)!important; color:var(--g2)!important; border-color:var(--g3)!important; }
     @media(max-width:768px) { .wrap{grid-template-columns:1fr;} .left-panel{border-right:none;border-bottom:1px solid var(--g3);} }
   </style>
@@ -349,7 +349,7 @@ function selectNicho(q,el){
 }
 
 const map=L.map('map').setView([-23.55,-46.63],11);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
 
 function updateCircle(lat,lng){
   const raio=parseInt(document.getElementById('raioInicial').value);
