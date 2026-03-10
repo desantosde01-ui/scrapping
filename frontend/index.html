@@ -3,136 +3,245 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>LeadHunter — Gerador de Leads</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <title>LEADHUNTER — SYSTEM ONLINE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75,300;75,400;75,500;100,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
-      --bg:#080b12; --surface:#0f1320; --surface2:#161b2e; --border:#1e2540;
-      --accent:#6366f1; --accent2:#818cf8; --green:#22c55e; --red:#ef4444;
-      --yellow:#f59e0b; --text:#e2e8f0; --muted:#64748b; --r:10px;
+      --r: rgba(255,0,0,1);
+      --r2: rgba(255,0,0,0.15);
+      --r3: rgba(255,0,0,0.05);
+      --g1: #0d0d0d;
+      --g2: #808080;
+      --g3: #353535;
+      --g4: #1a1a1a;
+      --white: #e8e8e8;
+      --mono: "Martian Mono", monospace;
     }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-      background-image:radial-gradient(ellipse at 10% 0%,rgba(99,102,241,.08) 0%,transparent 55%),
-                       radial-gradient(ellipse at 90% 100%,rgba(99,102,241,.05) 0%,transparent 50%);}
-    header{padding:18px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
-    .logo{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:9px;
-      display:flex;align-items:center;justify-content:center;font-size:18px;}
-    .logo-txt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;}
-    .logo-txt span{color:var(--accent2);}
-    .hbadge{margin-left:auto;background:rgba(99,102,241,.12);color:var(--accent2);
-      border:1px solid rgba(99,102,241,.25);padding:3px 12px;border-radius:999px;font-size:.72rem;font-weight:600;}
-    .wrap{max-width:1200px;margin:0 auto;padding:32px 20px;display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;}
-    .card+.card{margin-top:20px;}
-    .ctitle{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;margin-bottom:18px;
-      display:flex;align-items:center;gap:8px;}
-    .ctitle::before{content:'';display:inline-block;width:3px;height:14px;background:var(--accent);border-radius:2px;}
-    label{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-    input,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
-      padding:9px 13px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.88rem;margin-bottom:16px;outline:none;transition:border-color .2s;}
-    input:focus,select:focus{border-color:var(--accent);}
-    input::placeholder{color:var(--muted);}
-    .nichos-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px;}
-    .nicho-chip{padding:7px 10px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);
-      font-size:.8rem;cursor:pointer;transition:all .2s;text-align:center;user-select:none;}
-    .nicho-chip:hover{border-color:var(--accent);}
-    .nicho-chip.active{background:rgba(99,102,241,.15);border-color:var(--accent);color:var(--accent2);}
-    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .slider-wrap{margin-bottom:16px;}
-    .slider-label{display:flex;justify-content:space-between;margin-bottom:6px;}
-    .slider-val{font-weight:600;color:var(--accent2);}
-    input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;margin-bottom:0;padding:0;}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
-    .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-    .toggle-label{font-size:.85rem;}
-    .toggle{position:relative;width:42px;height:22px;}
-    .toggle input{opacity:0;width:0;height:0;}
-    .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:22px;cursor:pointer;transition:.3s;}
-    .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
-    .toggle input:checked+.toggle-slider{background:var(--accent);}
-    .toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
-    #map{height:260px;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;}
-    .map-hint{font-size:.75rem;color:var(--muted);margin-bottom:16px;}
-    .btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#4f46e5);color:white;
-      border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;
-      cursor:pointer;transition:opacity .2s,transform .1s;margin-top:4px;}
-    .btn:hover{opacity:.9;} .btn:active{transform:scale(.98);} .btn:disabled{opacity:.35;cursor:not-allowed;}
-    .btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent2);margin-top:10px;}
-    .btn-outline:hover{background:rgba(99,102,241,.1);opacity:1;}
-    .right{display:flex;flex-direction:column;gap:20px;}
-    #status-card{display:none;}
-    .s-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-    .sbadge{padding:3px 12px;border-radius:999px;font-size:.72rem;font-weight:600;}
-    .s-running{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.3);}
-    .s-done{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25);}
-    .s-error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);}
-    .logbox{background:#050709;border:1px solid var(--border);border-radius:7px;padding:12px;
-      height:190px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.78rem;line-height:1.8;}
-    .logbox::-webkit-scrollbar{width:3px;}
-    .logbox::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-    .ll{opacity:0;animation:fi .3s forwards;}
-    @keyframes fi{to{opacity:1;}}
-    .lok{color:var(--green);} .lerr{color:var(--red);} .ldone{color:var(--accent2);font-weight:700;} .lsearch{color:#60a5fa;}
-    #results-card{display:none;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
-    .sbox{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
-    .snum{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:var(--accent2);line-height:1;}
-    .slbl{font-size:.72rem;color:var(--muted);margin-top:4px;}
-    .twrap{overflow-x:auto;max-height:340px;overflow-y:auto;border-radius:8px;border:1px solid var(--border);}
-    .twrap::-webkit-scrollbar{width:3px;height:3px;}
-    .twrap::-webkit-scrollbar-thumb{background:var(--border);}
-    table{width:100%;border-collapse:collapse;font-size:.81rem;}
-    th{text-align:left;padding:9px 11px;background:var(--surface2);color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
-    td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
-    tr:last-child td{border-bottom:none;} tr:hover td{background:rgba(255,255,255,.02);}
-    .npill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;font-size:.76rem;font-weight:600;}
-    .nh{background:rgba(34,197,94,.1);color:var(--green);} .nm{background:rgba(245,158,11,.1);color:var(--yellow);} .nl{background:rgba(239,68,68,.1);color:var(--red);}
-    .alink{color:var(--accent2);text-decoration:none;font-size:.78rem;} .alink:hover{text-decoration:underline;}
-    .nodash{color:var(--muted);font-size:.78rem;}
-    .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(99,102,241,.2);border-top-color:var(--accent);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px;}
-    @keyframes sp{to{transform:rotate(360deg);}}
-    .empty{text-align:center;padding:50px 20px;color:var(--muted);}
-    .eico{font-size:2.8rem;margin-bottom:12px;}
-    @media(max-width:780px){.wrap{grid-template-columns:1fr;}header{padding:14px 18px;}}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    ::selection { background: none; color: var(--r); }
+    body {
+      font-family: var(--mono);
+      background: var(--g1);
+      color: var(--g2);
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: 0.4;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+      pointer-events: none; z-index: 9998;
+    }
+    header {
+      border-bottom: 1px solid var(--g3);
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 40px;
+      height: 64px;
+      position: relative;
+    }
+    .ch-tl, .ch-tr {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 14px; height: 14px;
+    }
+    .ch-tl { left: 16px; border-top: 1px solid var(--r); border-left: 1px solid var(--r); }
+    .ch-tr { right: 16px; border-top: 1px solid var(--r); border-right: 1px solid var(--r); }
+    .logo {
+      font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--white); display: flex; align-items: center; gap: 12px;
+    }
+    .logo-dot {
+      width: 8px; height: 8px; background: var(--r); border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    .hcenter { text-align: center; font-size: 0.6rem; letter-spacing: 0.25em; color: var(--g3); text-transform: uppercase; }
+    .spill {
+      font-size: 0.6rem; letter-spacing: 0.15em; color: var(--r);
+      border: 1px solid var(--g3); padding: 4px 12px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .spill::before { content:''; width:6px; height:6px; background:var(--r); border-radius:50%; animation:pulse 1.5s infinite; }
+    .wrap { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 64px); }
+    .left-panel { border-right: 1px solid var(--g3); display: flex; flex-direction: column; }
+    .ph {
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--g3);
+      font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--g3); display: flex; align-items: center; gap: 8px;
+    }
+    .ph::before { content: '//'; color: var(--r); }
+    .ps { padding: 20px 24px; border-bottom: 1px solid var(--g3); }
+    .sl {
+      font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--r); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .sl::after { content:''; flex:1; height:1px; background:var(--g3); }
+    .fl { font-size:.55rem; letter-spacing:.15em; text-transform:uppercase; color:var(--g3); margin-bottom:6px; }
+    input[type=text], input[type=password], select {
+      width: 100%; background: transparent; border: 1px solid var(--g3);
+      color: var(--g2); padding: 9px 12px; font-family: var(--mono);
+      font-size: 0.72rem; margin-bottom: 14px; outline: none;
+      transition: border-color .2s, color .2s; letter-spacing: 0.05em;
+    }
+    input:focus, select:focus { border-color: var(--r); color: var(--white); }
+    input::placeholder { color: var(--g3); }
+    select option { background: var(--g1); }
+    .nichos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+    .nicho-chip {
+      padding: 7px 8px; border: 1px solid var(--g3); font-family: var(--mono);
+      font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: crosshair; color: var(--g3); transition: all .15s; text-align: center; background: transparent;
+    }
+    .nicho-chip:hover { border-color: var(--g2); color: var(--g2); }
+    .nicho-chip.active { border-color: var(--r); color: var(--r); background: var(--r3); }
+    .srow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .sval { font-size: 0.9rem; color: var(--white); letter-spacing: 0.1em; min-width: 40px; text-align: right; }
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 2px; background: var(--g3);
+      outline: none; margin-bottom: 14px; padding: 0; cursor: crosshair;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      background: var(--r); cursor: crosshair; border: none; transform: rotate(45deg);
+    }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .trow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .tlbl { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--g2); }
+    .toggle { position: relative; width: 36px; height: 18px; cursor: crosshair; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .tslider { position: absolute; inset: 0; background: var(--g3); transition: .2s; }
+    .tslider:before { content:''; position:absolute; width:10px; height:10px; left:4px; top:4px; background:var(--g2); transition:.2s; }
+    .toggle input:checked + .tslider { background: var(--r2); border: 1px solid var(--r); }
+    .toggle input:checked + .tslider:before { transform: translateX(18px); background: var(--r); }
+    #map { height: 200px; border: 1px solid var(--g3); margin-bottom: 8px; filter: grayscale(1) brightness(0.4) contrast(1.2); }
+    .mhint { font-size:.55rem; letter-spacing:.1em; color:var(--g3); margin-bottom:14px; text-transform:uppercase; }
+    .btn-exec {
+      width: 100%; padding: 14px; background: var(--r); color: var(--g1);
+      border: none; font-family: var(--mono); font-size: 0.7rem; font-weight: 500;
+      letter-spacing: 0.3em; text-transform: uppercase; cursor: crosshair;
+      transition: opacity .2s, transform .1s; position: relative; overflow: hidden;
+    }
+    .btn-exec::before {
+      content:''; position:absolute; inset:0;
+      background: repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,0,0,.05) 4px,rgba(0,0,0,.05) 8px);
+    }
+    .btn-exec:hover { opacity: .85; }
+    .btn-exec:active { transform: scale(.99); }
+    .btn-exec:disabled { opacity: .3; cursor: not-allowed; }
+    .btn-dl {
+      width: 100%; padding: 11px; background: transparent; border: 1px solid var(--g3);
+      color: var(--g2); font-family: var(--mono); font-size: 0.62rem;
+      letter-spacing: 0.2em; text-transform: uppercase; cursor: crosshair; margin-top: 12px;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-dl:hover { border-color: var(--r); color: var(--r); }
+    .right-panel { display: flex; flex-direction: column; }
+    .rh {
+      padding: 20px 32px 16px; border-bottom: 1px solid var(--g3);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rht {
+      font-size: .58rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--g3); display: flex; align-items: center; gap: 8px;
+    }
+    .rht::before { content: '//'; color: var(--r); }
+    .rhb { font-size:.55rem; letter-spacing:.15em; text-transform:uppercase; padding:3px 10px; border:1px solid var(--g3); color:var(--g3); }
+    .rhb.running { border-color:rgba(255,200,0,.4); color:#ffc800; }
+    .rhb.done    { border-color:rgba(0,255,100,.3); color:#00ff64; }
+    .rhb.error   { border-color:var(--r); color:var(--r); }
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; padding: 60px;
+    }
+    .ecross { width:60px; height:60px; position:relative; }
+    .ecross::before,.ecross::after { content:''; position:absolute; background:var(--g3); }
+    .ecross::before { width:1px; height:100%; left:50%; top:0; }
+    .ecross::after  { width:100%; height:1px; top:50%; left:0; }
+    .etxt { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:var(--g3); text-align:center; line-height:2; }
+    .log-sec { padding:20px 32px; border-bottom:1px solid var(--g3); display:none; }
+    .logbox {
+      background:#080808; border:1px solid var(--g3); padding:14px;
+      height:180px; overflow-y:auto; font-size:.62rem; line-height:1.9; letter-spacing:.05em;
+    }
+    .logbox::-webkit-scrollbar { width:2px; }
+    .logbox::-webkit-scrollbar-thumb { background:var(--g3); }
+    .ll { opacity:0; animation:fi .3s forwards; }
+    @keyframes fi { to { opacity:1; } }
+    .lok { color:#00ff64; } .lerr { color:var(--r); } .ldone { color:var(--white); letter-spacing:.15em; } .lsearch { color:var(--g2); }
+    .stats-sec { padding:20px 32px; border-bottom:1px solid var(--g3); display:none; }
+    .sgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--g3); border:1px solid var(--g3); }
+    .sbox { background:var(--g1); padding:16px 20px; position:relative; }
+    .sbox::before { content:''; position:absolute; top:0; left:0; width:20px; height:1px; background:var(--r); }
+    .snum { font-size:2rem; color:var(--white); letter-spacing:-.02em; line-height:1; margin-bottom:6px; }
+    .slbl2 { font-size:.52rem; letter-spacing:.2em; text-transform:uppercase; color:var(--g3); }
+    .table-sec { flex:1; padding:20px 32px; display:none; flex-direction:column; }
+    .twrap { flex:1; overflow:auto; border:1px solid var(--g3); }
+    .twrap::-webkit-scrollbar { width:2px; height:2px; }
+    .twrap::-webkit-scrollbar-thumb { background:var(--g3); }
+    table { width:100%; border-collapse:collapse; font-size:.6rem; }
+    thead { position:sticky; top:0; background:var(--g1); }
+    th { text-align:left; padding:10px 14px; border-bottom:1px solid var(--g3); font-size:.52rem; letter-spacing:.2em; text-transform:uppercase; color:var(--r); font-weight:400; }
+    td { padding:10px 14px; border-bottom:1px solid rgba(53,53,53,.5); vertical-align:middle; letter-spacing:.05em; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:rgba(255,0,0,.02); }
+    tr:hover td:first-child { color:var(--r); }
+    .nhi{color:#00ff64;} .nmd{color:#ffc800;} .nlo{color:var(--r);}
+    .sa { color:var(--r); text-decoration:none; font-size:.58rem; letter-spacing:.1em; }
+    .sa:hover { text-decoration:underline; }
+    .nd { color:var(--g3); }
+    .spin { display:inline-block; width:10px; height:10px; border:1px solid var(--g3); border-top-color:var(--r); animation:sp .6s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes sp { to { transform:rotate(360deg); } }
+    .leaflet-container { background:#080808; }
+    .leaflet-tile { filter:grayscale(1) brightness(.3); }
+    .leaflet-control-zoom a { background:var(--g4)!important; color:var(--g2)!important; border-color:var(--g3)!important; }
+    @media(max-width:768px) { .wrap{grid-template-columns:1fr;} .left-panel{border-right:none;border-bottom:1px solid var(--g3);} }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">🎯</div>
-  <div class="logo-txt">Lead<span>Hunter</span></div>
-  <div class="hbadge">Powered by Apify + Supabase</div>
+  <div class="ch-tl"></div>
+  <div class="logo"><div class="logo-dot"></div>LEADHUNTER_SYS</div>
+  <div class="hcenter">ACQUISITION MODULE v2.0 // APIFY INTEGRATION</div>
+  <div class="spill">SYSTEM ONLINE</div>
+  <div class="ch-tr"></div>
 </header>
 
 <div class="wrap">
-  <div>
-    <div class="card">
-      <div class="ctitle">Token Apify</div>
-      <label>API Token</label>
-      <input type="password" id="apiToken" placeholder="apify_api_..."/>
+  <div class="left-panel">
+    <div class="ph">CONFIG_PARAMETERS</div>
 
-      <div class="ctitle">Nicho</div>
-      <label>Nichos rápidos</label>
+    <div class="ps">
+      <div class="sl">TARGET_SECTOR</div>
       <div class="nichos-grid" id="nichosGrid"></div>
-      <label>Ou digite um nicho personalizado</label>
-      <input type="text" id="nichoCustom" placeholder="Ex: clínica veterinária, academia, dentista..."/>
+      <div class="fl">CUSTOM INPUT</div>
+      <input type="text" id="nichoCustom" placeholder="dentista, academia..."/>
+    </div>
 
-      <div class="ctitle">Quantidade e Filtros</div>
-      <div class="slider-wrap">
-        <div class="slider-label">
-          <label style="margin:0">Quantidade de leads</label>
-          <span class="slider-val" id="qtdVal">20</span>
-        </div>
-        <input type="range" id="qtdSlider" min="5" max="100" step="5" value="20" oninput="document.getElementById('qtdVal').textContent=this.value"/>
+    <div class="ps">
+      <div class="sl">SCAN_PARAMETERS</div>
+      <div class="srow">
+        <div class="fl" style="margin:0">LEAD COUNT</div>
+        <div class="sval" id="qtdVal">20</div>
       </div>
+      <input type="range" id="qtdSlider" min="5" max="100" step="5" value="20"
+        oninput="document.getElementById('qtdVal').textContent=this.value"/>
       <div class="row2">
         <div>
-          <label>Nota mínima</label>
+          <div class="fl">MIN RATING</div>
           <select id="notaMinima">
-            <option value="0">Sem filtro</option>
+            <option value="0">NO FILTER</option>
             <option value="3">3.0+</option>
             <option value="3.5" selected>3.5+</option>
             <option value="4">4.0+</option>
@@ -140,230 +249,229 @@
           </select>
         </div>
         <div>
-          <label>Raio inicial</label>
+          <div class="fl">INIT RADIUS</div>
           <select id="raioInicial">
-            <option value="2000">2 km</option>
-            <option value="5000" selected>5 km</option>
-            <option value="10000">10 km</option>
-            <option value="20000">20 km</option>
-            <option value="50000">50 km</option>
+            <option value="2000">2 KM</option>
+            <option value="5000" selected>5 KM</option>
+            <option value="10000">10 KM</option>
+            <option value="20000">20 KM</option>
+            <option value="50000">50 KM</option>
           </select>
         </div>
       </div>
-      <div class="toggle-row">
-        <span class="toggle-label">🔄 Expandir raio automaticamente</span>
+      <div class="trow">
+        <span class="tlbl">AUTO EXPAND RADIUS</span>
         <label class="toggle">
           <input type="checkbox" id="autoExpandir" checked/>
-          <span class="toggle-slider"></span>
+          <span class="tslider"></span>
         </label>
       </div>
+    </div>
 
-      <div class="ctitle">Área de busca</div>
+    <div class="ps">
+      <div class="sl">SCAN_ZONE</div>
       <div id="map"></div>
-      <p class="map-hint">📍 Clique no mapa para definir o centro. O círculo mostra o raio selecionado.</p>
+      <div class="mhint">> CLICK MAP TO SET TARGET COORDINATES</div>
+    </div>
 
-      <button class="btn" id="btnScrape" onclick="startScraping()">🚀 Iniciar Busca de Leads</button>
+    <div class="ps" style="border-bottom:none">
+      <button class="btn-exec" id="btnScrape" onclick="startScraping()">[ EXECUTE SCAN ]</button>
+      <button class="btn-dl" id="btnDl" style="display:none" onclick="downloadMd()">[ EXPORT .MD ]</button>
     </div>
   </div>
 
-  <div class="right">
-    <div class="card" id="empty-card">
-      <div class="empty">
-        <div class="eico">🎯</div>
-        <p>Configure o nicho, quantidade e área de busca.<br/>Clique em <strong>Iniciar Busca</strong> para começar.</p>
-      </div>
+  <div class="right-panel">
+    <div class="rh">
+      <div class="rht">OUTPUT_STREAM</div>
+      <div class="rhb" id="rhBadge">STANDBY</div>
     </div>
 
-    <div class="card" id="status-card">
-      <div class="s-header">
-        <div class="ctitle" style="margin:0">Progresso</div>
-        <span class="sbadge s-running" id="sbadge"><span class="spin"></span>Rodando...</span>
-      </div>
+    <div class="empty-state" id="emptyState">
+      <div class="ecross"></div>
+      <div class="etxt">SYSTEM READY<br/>CONFIGURE PARAMETERS<br/>AND EXECUTE SCAN</div>
+    </div>
+
+    <div class="log-sec" id="logSec">
+      <div class="sl" style="margin-bottom:10px">SCAN_LOG</div>
       <div class="logbox" id="logbox"></div>
     </div>
 
-    <div class="card" id="results-card">
-      <div class="ctitle">Leads Encontrados</div>
-      <div class="stats">
-        <div class="sbox"><div class="snum" id="stTotal">0</div><div class="slbl">Total</div></div>
-        <div class="sbox"><div class="snum" id="stSite">0</div><div class="slbl">Com Site</div></div>
-        <div class="sbox"><div class="snum" id="stNota">—</div><div class="slbl">Nota Média</div></div>
+    <div class="stats-sec" id="statsSec">
+      <div class="sl" style="margin-bottom:14px">ACQUISITION_REPORT</div>
+      <div class="sgrid">
+        <div class="sbox"><div class="snum" id="stTotal">0</div><div class="slbl2">TOTAL LEADS</div></div>
+        <div class="sbox"><div class="snum" id="stSite">0</div><div class="slbl2">WITH WEBSITE</div></div>
+        <div class="sbox"><div class="snum" id="stNota">—</div><div class="slbl2">AVG RATING</div></div>
       </div>
+    </div>
+
+    <div class="table-sec" id="tableSec">
+      <div class="sl" style="margin-bottom:14px">LEAD_DATABASE</div>
       <div class="twrap">
         <table>
-          <thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>Tel</th><th>Nota</th><th>Reviews</th><th>Site</th></tr></thead>
+          <thead>
+            <tr><th>#</th><th>DESIGNATION</th><th>LOCATION</th><th>CONTACT</th><th>RATING</th><th>REVIEWS</th><th>SITE</th></tr>
+          </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <button class="btn btn-outline" onclick="downloadMd()">⬇️ Baixar .md completo</button>
     </div>
   </div>
 </div>
 
 <script>
+const API = '';  // mesmo servidor — backend serve o frontend
+
 const NICHOS = [
-  {label:"🐾 Petshop",     q:"petshop banho e tosa"},
-  {label:"🦷 Dentista",    q:"clínica odontológica"},
-  {label:"🏋️ Academia",   q:"academia de ginástica"},
-  {label:"🍕 Restaurante", q:"restaurante"},
-  {label:"💈 Barbearia",   q:"barbearia"},
-  {label:"🌿 Estética",    q:"clínica de estética"},
-  {label:"🐕 Veterinária", q:"clínica veterinária"},
-  {label:"🧹 Limpeza",     q:"empresa de limpeza"},
-  {label:"📸 Fotógrafo",   q:"fotógrafo profissional"},
-  {label:"🔧 Mecânica",    q:"oficina mecânica"},
+  {label:"PETSHOP",     q:"petshop banho e tosa"},
+  {label:"DENTISTA",    q:"clínica odontológica"},
+  {label:"ACADEMIA",    q:"academia de ginástica"},
+  {label:"BARBEARIA",   q:"barbearia"},
+  {label:"VET",         q:"clínica veterinária"},
+  {label:"RESTAURANTE", q:"restaurante"},
+  {label:"ESTÉTICA",    q:"clínica de estética"},
+  {label:"MECÂNICA",    q:"oficina mecânica"},
+  {label:"FOTÓGRAFO",   q:"fotógrafo profissional"},
+  {label:"LIMPEZA",     q:"empresa de limpeza"},
 ];
 
-let nichoSelecionado = "";
-let currentJobId = null;
-let pollInterval = null;
-let lastLogCount = 0;
-let mapLat = null, mapLng = null;
-let mapCircle = null, mapMarker = null;
+let nichoSel="", currentJobId=null, pollInterval=null, lastLogCount=0;
+let mapLat=null, mapLng=null, mapCircle=null, mapMarker=null;
 
-function renderNichos() {
-  document.getElementById("nichosGrid").innerHTML = NICHOS.map(n =>
-    `<div class="nicho-chip" onclick="selectNicho('${n.q}',this)">${n.label}</div>`
-  ).join('');
+document.getElementById('nichosGrid').innerHTML = NICHOS.map(n =>
+  `<div class="nicho-chip" onclick="selectNicho('${n.q}',this)">${n.label}</div>`
+).join('');
+
+function selectNicho(q,el){
+  document.querySelectorAll('.nicho-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); nichoSel=q;
+  document.getElementById('nichoCustom').value='';
 }
 
-function selectNicho(q, el) {
-  document.querySelectorAll('.nicho-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  nichoSelecionado = q;
-  document.getElementById('nichoCustom').value = '';
+const map=L.map('map').setView([-23.55,-46.63],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+function updateCircle(lat,lng){
+  const raio=parseInt(document.getElementById('raioInicial').value);
+  if(mapMarker)map.removeLayer(mapMarker);
+  if(mapCircle)map.removeLayer(mapCircle);
+  mapMarker=L.circleMarker([lat,lng],{radius:4,color:'red',fillColor:'red',fillOpacity:1}).addTo(map);
+  mapCircle=L.circle([lat,lng],{radius:raio,color:'red',fillColor:'red',fillOpacity:.05,weight:1,dashArray:'4,4'}).addTo(map);
+  mapLat=lat; mapLng=lng;
 }
 
-const map = L.map('map').setView([-23.55, -46.63], 11);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-
-function updateCircle(lat, lng) {
-  const raio = parseInt(document.getElementById('raioInicial').value);
-  if (mapMarker) map.removeLayer(mapMarker);
-  if (mapCircle) map.removeLayer(mapCircle);
-  mapMarker = L.marker([lat, lng]).addTo(map);
-  mapCircle = L.circle([lat, lng], {radius: raio, color:'#6366f1', fillColor:'#6366f1', fillOpacity:.12, weight:2}).addTo(map);
-  mapLat = lat; mapLng = lng;
-}
-
-map.on('click', e => updateCircle(e.latlng.lat, e.latlng.lng));
-document.getElementById('raioInicial').addEventListener('change', () => {
-  if (mapLat && mapLng) updateCircle(mapLat, mapLng);
+map.on('click',e=>updateCircle(e.latlng.lat,e.latlng.lng));
+document.getElementById('raioInicial').addEventListener('change',()=>{
+  if(mapLat&&mapLng)updateCircle(mapLat,mapLng);
 });
-
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(p => {
-    map.setView([p.coords.latitude, p.coords.longitude], 12);
-    updateCircle(p.coords.latitude, p.coords.longitude);
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(p=>{
+    map.setView([p.coords.latitude,p.coords.longitude],12);
+    updateCircle(p.coords.latitude,p.coords.longitude);
   });
 }
 
-async function startScraping() {
-  const apiToken = document.getElementById('apiToken').value.trim();
-  const nichoCustom = document.getElementById('nichoCustom').value.trim();
-  const nicho = nichoCustom || nichoSelecionado;
-  const quantidade = parseInt(document.getElementById('qtdSlider').value);
-  const notaMinima = parseFloat(document.getElementById('notaMinima').value);
-  const raioInicial = parseInt(document.getElementById('raioInicial').value);
-  const autoExpandir = document.getElementById('autoExpandir').checked;
+async function startScraping(){
+  const nichoCustom=document.getElementById('nichoCustom').value.trim();
+  const nicho=nichoCustom||nichoSel;
+  const quantidade=parseInt(document.getElementById('qtdSlider').value);
+  const notaMinima=parseFloat(document.getElementById('notaMinima').value);
+  const raioInicial=parseInt(document.getElementById('raioInicial').value);
+  const autoExpandir=document.getElementById('autoExpandir').checked;
 
-  if (!apiToken) return alert('Por favor, insira o Token da Apify.');
-  if (!nicho) return alert('Selecione ou digite um nicho.');
+  if(!nicho)return alert('SELECT TARGET SECTOR');
 
-  document.getElementById('empty-card').style.display = 'none';
-  document.getElementById('status-card').style.display = 'block';
-  document.getElementById('results-card').style.display = 'none';
-  document.getElementById('logbox').innerHTML = '';
-  document.getElementById('btnScrape').disabled = true;
-  setBadge('running');
-  lastLogCount = 0;
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('logSec').style.display='block';
+  document.getElementById('statsSec').style.display='none';
+  document.getElementById('tableSec').style.display='none';
+  document.getElementById('btnDl').style.display='none';
+  document.getElementById('logbox').innerHTML='';
+  document.getElementById('btnScrape').disabled=true;
+  setBadge('running','<span class="spin"></span>SCANNING...');
+  lastLogCount=0;
 
-  try {
-    const body = { apiToken, nicho, quantidade, notaMinima, raioInicial, autoExpandir };
-    if (mapLat && mapLng) { body.lat = mapLat; body.lng = mapLng; }
-    const res = await fetch('/api/scrape', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+  try{
+    const body={nicho,quantidade,notaMinima,raioInicial,autoExpandir};
+    if(mapLat&&mapLng){body.lat=mapLat;body.lng=mapLng;}
+    const res=await fetch(`${API}/api/scrape`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
     });
-    const data = await res.json();
-    if (!data.jobId) throw new Error(data.error || 'Erro ao iniciar.');
-    currentJobId = data.jobId;
-    pollInterval = setInterval(pollJob, 2500);
-  } catch(e) {
-    addLog('❌ ' + e.message, 'err');
-    setBadge('error');
-    document.getElementById('btnScrape').disabled = false;
+    const data=await res.json();
+    if(!data.jobId)throw new Error(data.error||'INIT FAILED');
+    currentJobId=data.jobId;
+    pollInterval=setInterval(pollJob,2500);
+  }catch(e){
+    addLog('// ERR: '+e.message,'err');
+    setBadge('error','ERROR');
+    document.getElementById('btnScrape').disabled=false;
   }
 }
 
-async function pollJob() {
-  try {
-    const res = await fetch(`/api/job/${currentJobId}`);
-    const job = await res.json();
-    job.progress.slice(lastLogCount).forEach(p => addLog(p.msg, p.type));
-    lastLogCount = job.progress.length;
-    if (job.status === 'done') {
+async function pollJob(){
+  try{
+    const res=await fetch(`${API}/api/job/${currentJobId}`);
+    const job=await res.json();
+    job.progress.slice(lastLogCount).forEach(p=>addLog('> '+p.msg,p.type));
+    lastLogCount=job.progress.length;
+    if(job.status==='done'){
       clearInterval(pollInterval);
-      setBadge('done');
-      document.getElementById('btnScrape').disabled = false;
+      setBadge('done','COMPLETE');
+      document.getElementById('btnScrape').disabled=false;
+      document.getElementById('btnDl').style.display='block';
       renderResults(job.leads);
-    } else if (job.status === 'error') {
+    }else if(job.status==='error'){
       clearInterval(pollInterval);
-      setBadge('error');
-      addLog('❌ ' + job.error, 'err');
-      document.getElementById('btnScrape').disabled = false;
+      setBadge('error','ERROR');
+      addLog('// CRITICAL: '+job.error,'err');
+      document.getElementById('btnScrape').disabled=false;
     }
-  } catch(e) { addLog('⚠️ Erro ao verificar status.', 'err'); }
+  }catch(e){addLog('// WARNING: CONNECTION LOST','err');}
 }
 
-function addLog(msg, type) {
-  const box = document.getElementById('logbox');
-  const d = document.createElement('div');
-  d.className = `ll l${type}`;
-  d.textContent = msg;
-  box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
+function addLog(msg,type){
+  const box=document.getElementById('logbox');
+  const d=document.createElement('div');
+  d.className=`ll l${type}`; d.textContent=msg;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
 }
 
-function setBadge(s) {
-  const b = document.getElementById('sbadge');
-  b.className = `sbadge s-${s}`;
-  if (s==='running') b.innerHTML = '<span class="spin"></span>Rodando...';
-  else if (s==='done') b.textContent = '✅ Concluído';
-  else b.textContent = '❌ Erro';
+function setBadge(cls,txt){
+  const b=document.getElementById('rhBadge');
+  b.className=`rhb ${cls}`; b.innerHTML=txt;
 }
 
-function renderResults(leads) {
-  document.getElementById('results-card').style.display = 'block';
-  const comSite = leads.filter(l => l.website && l.website !== '—').length;
-  const notas = leads.map(l => parseFloat(l.nota)).filter(n => !isNaN(n) && n > 0);
-  const media = notas.length ? (notas.reduce((a,b) => a+b, 0) / notas.length).toFixed(1) : '—';
-  document.getElementById('stTotal').textContent = leads.length;
-  document.getElementById('stSite').textContent = comSite;
-  document.getElementById('stNota').textContent = media;
-  document.getElementById('tbody').innerHTML = leads.map((l, i) => {
-    const n = parseFloat(l.nota);
-    const nc = n >= 4 ? 'nh' : n >= 3.5 ? 'nm' : 'nl';
-    const npill = n ? `<span class="npill ${nc}">⭐ ${n}</span>` : '—';
-    const site = l.website && l.website !== '—'
-      ? `<a class="alink" href="${l.website}" target="_blank">🔗 site</a>`
-      : `<span class="nodash">—</span>`;
-    return `<tr>
-      <td style="color:var(--muted)">${i+1}</td>
-      <td><strong>${l.nome}</strong></td>
-      <td style="color:var(--muted)">${l.cidade}</td>
+function renderResults(leads){
+  document.getElementById('statsSec').style.display='block';
+  document.getElementById('tableSec').style.display='flex';
+  const comSite=leads.filter(l=>l.website&&l.website!=='—').length;
+  const notas=leads.map(l=>parseFloat(l.nota)).filter(n=>!isNaN(n)&&n>0);
+  const media=notas.length?(notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1):'—';
+  document.getElementById('stTotal').textContent=leads.length;
+  document.getElementById('stSite').textContent=comSite;
+  document.getElementById('stNota').textContent=media;
+  document.getElementById('tbody').innerHTML=leads.map((l,i)=>{
+    const n=parseFloat(l.nota);
+    const nc=n>=4?'nhi':n>=3.5?'nmd':'nlo';
+    const nh=n?`<span class="${nc}">${n}</span>`:'<span class="nd">N/A</span>';
+    const sh=l.website&&l.website!=='—'
+      ?`<a class="sa" href="${l.website}" target="_blank">[LINK]</a>`
+      :'<span class="nd">—</span>';
+    return`<tr>
+      <td class="nd">${String(i+1).padStart(2,'0')}</td>
+      <td style="color:#e8e8e8">${l.nome}</td>
+      <td>${l.cidade}</td>
       <td>${l.telefone}</td>
-      <td>${npill}</td>
-      <td style="color:var(--muted)">${l.reviews}</td>
-      <td>${site}</td>
+      <td>${nh}</td>
+      <td class="nd">${l.reviews}</td>
+      <td>${sh}</td>
     </tr>`;
   }).join('');
 }
 
-function downloadMd() {
-  if (currentJobId) window.location.href = `/api/job/${currentJobId}/download`;
+function downloadMd(){
+  if(currentJobId)window.location.href=`${API}/api/job/${currentJobId}/download`;
 }
-
-renderNichos();
 </script>
 </body>
 </html>
