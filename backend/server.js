@@ -18,8 +18,8 @@ function generateJobId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-async function upsertLeadsSupabase(leads) {
-  const rows = leads.map(l => ({
+function mapRow(l) {
+  return {
     placeUrl: l.placeId,
     title: l.nome,
     rating: l.nota !== "—" ? String(l.nota) : null,
@@ -28,24 +28,38 @@ async function upsertLeadsSupabase(leads) {
     address: l.endereco !== "—" ? `${l.endereco}, ${l.cidade}` : null,
     website: l.website !== "—" ? l.website : null,
     phoneNumber: l.telefone !== "—" ? l.telefone : null,
-  }));
+  };
+}
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+async function upsertToTable(rows, tabela, onConflict = "placeUrl") {
+  if (rows.length === 0) return 0;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Prefer": "resolution=ignore-duplicates",
+      "Prefer": `resolution=ignore-duplicates`,
+      "on-conflict": onConflict,
     },
     body: JSON.stringify(rows),
   });
-
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Supabase erro: ${err}`);
+    throw new Error(`Supabase erro (${tabela}): ${err}`);
   }
   return rows.length;
+}
+
+
+async function upsertLeadsSupabase(leads) {
+  const comSite = leads.filter(l => l.website && l.website !== "—").map(mapRow);
+  const semSite = leads.filter(l => (!l.website || l.website === "—") && l.telefone && l.telefone !== "—").map(mapRow);
+
+  await upsertToTable(comSite, "leads", "placeUrl");
+  await upsertToTable(semSite, "leads_sem_site", "phoneNumber");
+
+  return { comSite: comSite.length, semSite: semSite.length };
 }
 
 app.post("/api/scrape", async (req, res) => {
@@ -144,8 +158,8 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
 
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
-      await upsertLeadsSupabase(leads);
-      jobs[jobId].progress.push({ type: "ok", msg: `✅ Leads salvos! Duplicatas ignoradas.`, ts: new Date() });
+      const { comSite, semSite } = await upsertLeadsSupabase(leads);
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${comSite} com site → tabela "leads" | ${semSite} sem site → tabela "leads_sem_site"`, ts: new Date() });
     } catch (e) {
       jobs[jobId].progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
     }
