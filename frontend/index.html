@@ -347,7 +347,7 @@ function selectNicho(q,el){
 }
 
 const map=L.map('map').setView([-23.55,-46.63],11);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
 
 function updateCircle(lat,lng){
   const raio=parseInt(document.getElementById('raioInicial').value);
