@@ -418,8 +418,13 @@
 
     <div class="ps">
       <div class="sl">SCAN_ZONE</div>
+      <div style="position:relative;margin-bottom:8px;">
+        <input type="text" id="locationSearch" placeholder="Ex: Jundiai, Sao Paulo..." style="margin-bottom:0;padding-right:40px;" oninput="onLocationInput()" onkeydown="if(event.key==='Enter')searchLocation()"/>
+        <button onclick="searchLocation()" style="position:absolute;right:0;top:0;bottom:0;width:38px;background:transparent;border:none;border-left:1px solid var(--g3);color:var(--r);cursor:crosshair;font-size:18px;" title="Buscar">&#x2316;</button>
+        <div id="locationSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--g1);border:1px solid var(--g3);border-top:none;z-index:999;max-height:180px;overflow-y:auto;"></div>
+      </div>
       <div id="map"></div>
-      <div class="mhint">> CLICK MAP TO SET TARGET COORDINATES</div>
+      <div class="mhint">> BUSQUE UMA CIDADE OU CLIQUE NO MAPA</div>
     </div>
 
     <div class="ps" style="border-bottom:none">
@@ -620,6 +625,69 @@ function renderResults(leads){
 function downloadMd(){
   if(currentJobId)window.location.href=`${API}/api/job/${currentJobId}/download`;
 }
+
+// GEOCODING - busca de cidade
+let locationDebounce = null;
+
+function onLocationInput() {
+  clearTimeout(locationDebounce);
+  const val = document.getElementById('locationSearch').value.trim();
+  if (val.length < 3) { hideSuggestions(); return; }
+  locationDebounce = setTimeout(() => fetchSuggestions(val), 400);
+}
+
+async function fetchSuggestions(query) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q=${encodeURIComponent(query)}`, {
+      headers: { 'Accept-Language': 'pt-BR' }
+    });
+    const data = await res.json();
+    showSuggestions(data);
+  } catch(e) {}
+}
+
+function showSuggestions(results) {
+  const box = document.getElementById('locationSuggestions');
+  if (!results.length) { box.style.display='none'; return; }
+  box.innerHTML = results.map((r,i) => 
+    `<div onclick="selectLocation(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"&#39;")}')" 
+      style="padding:10px 14px;border-bottom:1px solid var(--g3);cursor:crosshair;font-size:13px;color:var(--g2);letter-spacing:0.05em;"
+      onmouseover="this.style.color='var(--r)'" onmouseout="this.style.color='var(--g2)'"
+    >${r.display_name}</div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+function hideSuggestions() {
+  document.getElementById('locationSuggestions').style.display = 'none';
+}
+
+function selectLocation(lat, lon, name) {
+  hideSuggestions();
+  document.getElementById('locationSearch').value = name.split(',').slice(0,2).join(',').trim();
+  const z = 12;
+  map.setView([lat, lon], z);
+  updateCircle(parseFloat(lat), parseFloat(lon));
+}
+
+async function searchLocation() {
+  const val = document.getElementById('locationSearch').value.trim();
+  if (!val) return;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(val)}`, {
+      headers: { 'Accept-Language': 'pt-BR' }
+    });
+    const data = await res.json();
+    if (data.length) selectLocation(data[0].lat, data[0].lon, data[0].display_name);
+  } catch(e) {}
+}
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('#locationSearch') && !e.target.closest('#locationSuggestions')) {
+    hideSuggestions();
+  }
+});
 </script>
 </body>
 </html>
