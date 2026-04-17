@@ -146,7 +146,7 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
 
       const input = {
         searchStringsArray: [nicho],
-        maxCrawledPlacesPerSearch: quantidade * 2,
+        maxCrawledPlacesPerSearch: quantidade,
         language: "pt-BR",
         countryCode: "br",
       };
