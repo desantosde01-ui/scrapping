@@ -34,7 +34,7 @@ function mapRow(l) {
   };
 }
 
-async function insertToTable(rows, tabela) {
+async function upsertToTable(rows, tabela, onConflict) {
   if (rows.length === 0) return 0;
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
     method: "POST",
@@ -42,7 +42,8 @@ async function insertToTable(rows, tabela) {
       "Content-Type": "application/json",
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Prefer": "return=minimal",
+      "Prefer": "resolution=ignore-duplicates,return=minimal",
+      "on-conflict": onConflict,
     },
     body: JSON.stringify(rows),
   });
@@ -55,7 +56,7 @@ async function insertToTable(rows, tabela) {
 
 async function upsertLeadsSupabase(leads) {
   const rows = leads.filter(l => l.telefone && l.telefone !== "—").map(mapRow);
-  await insertToTable(rows, "leads");
+  await upsertToTable(rows, "leads", "phone_number");
   return { total: rows.length };
 }
 
