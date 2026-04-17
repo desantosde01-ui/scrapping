@@ -11,469 +11,442 @@
     @font-face {
       font-family: 'HS_LunaObscura';
       src: url("assets/HS_LunaObscura_ebb28937eba0.woff2") format('woff2');
-      font-weight: 400;
-      font-display: swap;
+      font-weight: 400; font-display: swap;
     }
 
     :root {
-      --r: rgba(255,0,0,1);
-      --r2: rgba(255,0,0,0.15);
-      --r3: rgba(255,0,0,0.05);
-      --g1: #0d0d0d;
-      --g2: #808080;
-      --g3: #353535;
-      --g4: #1a1a1a;
-      --white: #808080; /* Mapped to g2 to match the "Primary Text" feel */
-      --mono: "HS_LunaObscura", "Martian Mono", monospace;
-      --padding-main: calc(8px + 0.6vw);
+      --bg:        #0d0d0d;
+      --fg:        #e8e8e8;
+      --primary:   #ff0000;
+      --primary5:  rgba(255,0,0,0.05);
+      --primary10: rgba(255,0,0,0.10);
+      --primary50: rgba(255,0,0,0.50);
+      --secondary: #1a1a1a;
+      --muted:     #808080;
+      --border:    #353535;
+      --surface:   #0a0a0a;
+      --success:   #39a854;
+      --warning:   #ffb300;
+      --mono: 'HS_LunaObscura', 'Martian Mono', monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    ::selection { background: none; color: var(--r); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+    ::selection { background: none; color: var(--primary); }
+
+    html, body { height: 100%; overflow: hidden; }
 
     body {
       font-family: var(--mono);
-      font-weight: 400;
-      font-style: normal;
-      background: var(--g1);
-      color: var(--g2);
-      min-height: 100vh;
-      overflow-x: hidden;
-      cursor: crosshair;
+      background: var(--bg);
+      color: var(--fg);
       text-transform: uppercase;
     }
 
+    /* ── Overlays ── */
     body::before {
       content: '';
-      position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: -2; opacity: 1;
+      position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.03;
     }
-
-    /* Noise overlay from LunaObscura */
     body::after {
       content: '';
-      position: fixed;
-      top: -50%; left: -50%; right: -50%; bottom: -50%;
-      width: 200%; height: 200vh;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.1;
-      background-size: 500px;
-      z-index: 1000;
-      pointer-events: none;
-      animation: noise-anim .2s infinite steps(4);
+      position: fixed; inset: 0; pointer-events: none; z-index: 9997;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.15) 2px, rgba(0,0,0,.15) 4px);
     }
 
-    @keyframes noise-anim {
-        0% { transform: translate(0,0); }
-        10% { transform: translate(-5%,-5%); }
-        20% { transform: translate(-10%,5%); }
-        30% { transform: translate(5%,-10%); }
-        40% { transform: translate(-5%,15%); }
-        50% { transform: translate(-10%,5%); }
-        60% { transform: translate(15%,0); }
-        70% { transform: translate(0,10%); }
-        80% { transform: translate(-15%,0); }
-        90% { transform: translate(10%,5%); }
-        100% { transform: translate(5%,0); }
-    }
+    /* ── Layout ── */
+    #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
+    /* ── Header ── */
     header {
-      border-bottom: 1px solid var(--g3);
-      display: grid;
-      grid-template-columns: 360px 1fr auto;
-      align-items: stretch;
-      height: 64px;
-      position: relative;
-      background-color: var(--g1);
-      backdrop-filter: blur(30px);
-      z-index: 10;
-      overflow: visible;
+      height: 64px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      position: relative; background: var(--bg); z-index: 10;
     }
-
-    /* Corner brackets via header pseudo-elements — zero grid impact */
     header::before, header::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      width: 12px; height: 12px;
-      pointer-events: none;
-      z-index: 12;
+      content: ''; position: absolute; top: 0;
+      width: 16px; height: 16px; pointer-events: none;
     }
-    header::before { left: 0; border-top: 1px solid var(--r); border-left: 1px solid var(--r); }
-    header::after  { right: 0; border-top: 1px solid var(--r); border-right: 1px solid var(--r); }
+    header::before { left: 0; border-top: 1px solid var(--primary); border-left: 1px solid var(--primary); }
+    header::after  { right: 0; border-top: 1px solid var(--primary); border-right: 1px solid var(--primary); }
 
-    /* Hide the bracket divs — brackets are now on header pseudo-elements */
-    .ch-tl, .ch-tr { display: none; }
-
-    .logo {
-      height: 100%;
-      padding: 0 24px;
-      border-right: 1px solid var(--g3);
-      font-size: 20px;
-      color: var(--white);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      letter-spacing: 0.1em;
+    .h-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0;
+      animation: pulse-dot 1.5s ease-in-out infinite;
     }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .h-logo span { font-size: 12px; letter-spacing: .2em; font-weight: 500; color: var(--fg); }
 
-    .logo-dot {
-      width: 10px; height: 10px; background: var(--r); border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-      flex-shrink: 0;
+    .h-center { flex: 1; text-align: center; font-size: 10px; letter-spacing: .15em; color: var(--muted); }
+
+    .h-status {
+      flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+      border: 1px solid var(--primary50); padding: 4px 12px;
     }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    .h-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+    .h-status span { font-size: 10px; letter-spacing: .15em; color: var(--primary); font-weight: 500; }
 
-    .hcenter {
-      display: flex; align-items: center; justify-content: center;
-      text-align: center; font-size: 14px; letter-spacing: 0.1em;
-      color: var(--g3); text-transform: uppercase; padding: 0 20px;
+    /* ── Main wrap ── */
+    .wrap { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Left Panel ── */
+    .left-panel {
+      width: 420px; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      background: rgba(255,255,255,.01);
     }
+    .left-panel::-webkit-scrollbar { width: 2px; }
+    .left-panel::-webkit-scrollbar-thumb { background: var(--border); }
 
-    .spill {
-      font-size: 14px; letter-spacing: 0.1em; color: var(--r);
-      border-left: 1px solid var(--g3); padding: 0 24px; text-transform: uppercase;
-      display: flex; align-items: center; gap: 8px;
-      height: 100%; white-space: nowrap;
-    }
-    .spill::before { content:''; width:6px; height:6px; background:var(--r); border-radius:50%; animation:pulse 1.5s infinite; flex-shrink: 0; }
+    .ps { padding: 20px 24px; border-bottom: 1px solid var(--border); }
 
-    .wrap { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 64px); overflow: hidden; }
-    .left-panel { border-right: 1px solid var(--g3); display: flex; flex-direction: column; background: rgba(128,128,128,0.02); overflow: hidden; min-width: 0; }
-
-    .ph {
-      padding: 20px 24px 16px; border-bottom: 1px solid var(--g3);
-      font-size: 16px; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--g3); display: flex; align-items: center; gap: 8px;
-    }
-    .ph::before { content: ''; font-family: 'HS_LunaObscura'; color: var(--r); }
-
-    .ps { padding: var(--padding-main) 24px; border-bottom: 1px solid var(--g3); min-width: 0; }
-
+    /* ── Section label ── */
     .sl {
-      font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--r); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; letter-spacing: .15em; margin-bottom: 16px;
     }
-    .sl::after { content:''; flex:1; height:1px; background:var(--g3); }
+    .sl .pre { color: var(--primary); font-weight: 600; }
+    .sl .nm  { color: var(--fg); font-weight: 500; }
+    .sl .ln  { flex: 1; height: 1px; background: var(--border); }
 
-    .fl { font-size: 16px; letter-spacing:.1em; text-transform:uppercase; color:var(--g3); margin-bottom:6px; }
-
-    /* Inputs styled as LunaObscura Forms (.text-settings elements) */
-    input[type=text], input[type=password], select {
-      width: 100%; background: transparent; border: 1px solid var(--g3);
-      color: var(--g2); padding: var(--padding-main); font-family: var(--mono);
-      font-size: 16px; margin-bottom: 14px; outline: none;
-      transition: border-color .2s, color .2s; letter-spacing: 0.05em; z-index: 1; position: relative;
-    }
-    input:focus, select:focus { border-color: var(--g2); color: var(--g2); z-index: 3;}
-    input:hover, select:hover { border-color: var(--g2); }
-    input::placeholder { color: var(--g3); }
-    select option { background: var(--g1); }
-
-    .nichos-grid { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 0px; 
-      margin-bottom: 14px;
-      border-top: 1px solid var(--g3);
-      border-right: 1px solid var(--g3);
-    }
-    
-    /* Nicho Chip logic mapped to LunaObscura Checkbox */
+    /* ── Nicho chips ── */
+    .nichos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
     .nicho-chip {
-      position: relative;
-      border-left: 1px solid var(--g3);
-      border-bottom: 1px solid var(--g3);
-      width: 100%;
-      min-width: 0;
-      padding: var(--padding-main);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      z-index: 1;
-      color: var(--g3);
-      cursor: crosshair;
-      transition: none;
+      font-size: 11px; letter-spacing: .12em; padding: 10px 12px;
+      border: 1px solid var(--border); color: var(--muted);
+      background: transparent; transition: border-color .15s, color .15s;
       text-align: left;
-      font-size: 14px;
     }
-    .nicho-chip:before {
-      content: "";
-      font-family: "HS_LunaObscura";
-      margin-right: 8px;
-    }
-    .nicho-chip:hover { color: var(--g2) !important; z-index: 3; }
-    .nicho-chip:hover::after { content:''; position:absolute; inset:0; border:1px solid var(--r2); pointer-events:none; }
-    .nicho-chip.active { color: var(--g2); }
-    .nicho-chip.active:before { color: var(--r); content: ""; }
+    .nicho-chip:hover { border-color: var(--muted); color: var(--fg); }
+    .nicho-chip.active { border-color: var(--primary); color: var(--primary); background: var(--primary10); }
 
+    /* ── Field label ── */
+    .fl { font-size: 9px; letter-spacing: .12em; color: var(--muted); margin-bottom: 6px; }
+
+    /* ── Inputs / selects ── */
+    input[type=text], select {
+      width: 100%; background: var(--secondary); border: 1px solid var(--border);
+      color: var(--fg); padding: 10px 12px; font-family: var(--mono);
+      font-size: 11px; letter-spacing: .05em; margin-bottom: 14px;
+      outline: none; transition: border-color .15s;
+    }
+    input[type=text]:focus, select:focus { border-color: var(--muted); }
+    input[type=text]:hover, select:hover { border-color: var(--muted); }
+    input[type=text]::placeholder { color: var(--border); }
+    select option { background: var(--bg); }
+
+    /* ── Slider ── */
     .srow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .sval { font-size: 24px; color: var(--white); letter-spacing: 0.1em; min-width: 40px; text-align: right; }
-
+    .sval { font-size: 11px; letter-spacing: .1em; color: var(--fg); }
     input[type=range] {
-      -webkit-appearance: none; width: 100%; height: 2px; background: var(--g3);
-      outline: none; margin-bottom: 14px; padding: 0; cursor: crosshair;
+      -webkit-appearance: none; width: 100%; height: 2px;
+      background: var(--border); outline: none; margin-bottom: 14px; padding: 0;
     }
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 14px; height: 14px;
-      background: var(--r); outline: 1px solid var(--g1); cursor: crosshair; border: none; transform: rotate(45deg);
+      -webkit-appearance: none; width: 12px; height: 12px;
+      background: var(--primary); border: none; transform: rotate(45deg);
     }
 
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .trow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .tlbl { font-size: 16px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--g2); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* Toggle mapped to HS_LunaObscura */
-    .toggle { position: relative; width: 36px; height: 18px; cursor: crosshair; }
+    /* ── Toggle ── */
+    .trow { display: flex; align-items: center; justify-content: space-between; }
+    .tlbl { font-size: 10px; letter-spacing: .12em; color: var(--muted); }
+    .toggle { position: relative; width: 40px; height: 20px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .tslider { position: absolute; inset: 0; background: transparent; border: 1px solid var(--g3); transition: .2s; }
-    .tslider:before { content:''; position:absolute; width:10px; height:10px; left:3px; top:3px; background:var(--g3); transition:.2s; }
-    .toggle input:checked + .tslider { background: transparent; border: 1px solid var(--r); }
-    .toggle input:checked + .tslider:before { transform: translateX(18px); background: var(--r); }
-
-    #map { height: 200px; border: 1px solid var(--g3); margin-bottom: 8px; filter: grayscale(100%) invert(100%) hue-rotate(180deg) contrast(120%); }
-    .mhint { font-size:14px; letter-spacing:.1em; color:var(--g3); margin-bottom:14px; text-transform:uppercase; }
-
-    /* Red Button Logic */
-    .btn-exec {
-      width: 100%;
-      position: relative;
-      box-sizing: border-box;
-      padding: 16px 32px;
-      text-wrap: nowrap;
-      white-space: nowrap;
-      color: var(--g1);
-      background-color: var(--r);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
-      border: none; font-family: var(--mono); font-size: 20px;
-      text-transform: uppercase; cursor: crosshair;
-      transition: box-shadow .2s;
+    .tslider {
+      position: absolute; inset: 0; border: 1px solid var(--border);
+      background: transparent; transition: .2s;
     }
-    .btn-exec:hover { box-shadow: 0 0 50px rgba(255, 0, 0, 0.5); }
-    .btn-exec:active { transform: scale(.99); }
-    .btn-exec:disabled { opacity: .3; cursor: not-allowed; box-shadow: none; }
+    .tslider::before {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      left: 2px; top: 2px; background: var(--border); transition: .2s;
+    }
+    .toggle input:checked + .tslider { border-color: var(--primary); }
+    .toggle input:checked + .tslider::before { transform: translateX(20px); background: var(--primary); }
+
+    /* ── Map ── */
+    .location-wrap { position: relative; margin-bottom: 10px; }
+    .location-wrap input[type=text] { padding-right: 42px; margin-bottom: 0; }
+    .btn-search {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
+      background: transparent; border: none; border-left: 1px solid var(--border);
+      color: var(--primary); font-size: 18px;
+    }
+    #locationSuggestions {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--bg); border: 1px solid var(--border); border-top: none;
+      z-index: 999; max-height: 180px; overflow-y: auto;
+    }
+    .sugg-item {
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      font-size: 9px; letter-spacing: .05em; color: var(--muted);
+    }
+    .sugg-item:last-child { border-bottom: none; }
+    .sugg-item:hover { color: var(--primary); }
+    #map {
+      height: 200px; border: 1px solid var(--border); margin-bottom: 6px;
+      filter: grayscale(100%) invert(100%) hue-rotate(180deg) contrast(120%);
+    }
+    .mhint { font-size: 9px; letter-spacing: .12em; color: var(--border); }
+
+    /* ── Buttons ── */
+    .btn-exec {
+      width: 100%; padding: 12px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: .25em;
+      font-weight: 600; border: 1px solid var(--primary);
+      background-color: var(--primary); color: #fff;
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(255,255,255,.03) 4px, rgba(255,255,255,.03) 8px);
+      transition: opacity .15s;
+    }
+    .btn-exec:hover:not(:disabled) { opacity: .9; }
+    .btn-exec:disabled { opacity: .3; }
 
     .btn-dl {
-      width: 100%; padding: var(--padding-main); background: transparent; border: 1px solid var(--g3);
-      color: var(--g2); font-family: var(--mono); font-size: 18px;
-      text-transform: uppercase; cursor: crosshair; margin-top: 12px;
-      transition: border-color .2s, color .2s;
+      width: 100%; padding: 8px; margin-top: 10px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: .2em;
+      border: 1px solid var(--border); color: var(--muted);
+      background: transparent; transition: border-color .15s, color .15s;
     }
-    .btn-dl:hover { border-color: var(--g2); color: var(--g2); }
+    .btn-dl:hover { border-color: var(--muted); color: var(--fg); }
 
-    .right-panel { display: flex; flex-direction: column; }
+    /* ── Right panel ── */
+    .right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
     .rh {
-      padding: 20px 32px 16px; border-bottom: 1px solid var(--g3);
+      padding: 16px 24px; border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
     }
-    .rht {
-      font-size: 16px; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--g3); display: flex; align-items: center; gap: 8px;
-    }
-    .rht::before { content: ''; font-family: 'HS_LunaObscura'; color: var(--r); }
-    .rhb { font-size: 14px; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border:1px solid var(--g3); color:var(--g3); }
-    .rhb.running { border-color: rgba(128,128,128,0.5); color: var(--g2); }
-    .rhb.done    { border-color: rgba(255,0,0,0.5); color: var(--r); }
-    .rhb.error   { border-color: var(--r); color: var(--r); }
+    .rht { display: flex; align-items: center; gap: 8px; }
+    .rht .pre { font-size: 11px; color: var(--primary); font-weight: 600; }
+    .rht .nm  { font-size: 11px; letter-spacing: .15em; color: var(--fg); }
 
-    /* Empty state using LunarObscura dividers */
+    .badge { font-size: 10px; letter-spacing: .15em; display: flex; align-items: center; gap: 6px; }
+    .badge.standby { color: var(--muted); }
+    .badge.running { color: var(--fg); }
+    .badge.done    { color: var(--success); }
+    .badge.error   { color: var(--primary); }
+
+    .spin {
+      display: inline-block; width: 10px; height: 10px;
+      border: 1px solid var(--border); border-top-color: var(--primary);
+      animation: sp .6s linear infinite;
+    }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    /* ── Empty state ── */
     .empty-state {
       flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 16px; padding: 60px;
+      align-items: center; justify-content: center; gap: 12px;
     }
-    
-    .crosses {
-      display: flex;
-      width: 100%;
-      align-items: flex-start;
-      position: relative;
-      padding: var(--padding-main);
-      gap: var(--padding-main);
-      flex-wrap: nowrap;
-      flex-direction: row;
-      justify-content: space-between;
-      max-width: 400px;
-    }
-    .cross {
-      width: 40px;
-      height: 40px;
-      background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2254%22%20height%3D%2254%22%20viewBox%3D%220%200%2054%2054%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M27%200V54%22%20stroke%3D%22%234F4F4F%22%2F%3E%0A%3Cpath%20d%3D%22M54%2027L-1.99676e-06%2027%22%20stroke%3D%22%234F4F4F%22%2F%3E%0A%3C%2Fsvg%3E") no-repeat center center;
-      background-size: contain;
-    }
-    
-    .etxt { font-size: 18px; letter-spacing:.1em; text-transform:uppercase; color:var(--g3); text-align:center; line-height: 150%; }
+    .empty-icon { font-size: 32px; color: var(--border); line-height: 1; }
+    .empty-txt { font-size: 11px; letter-spacing: .15em; color: var(--muted); text-align: center; line-height: 1.8; }
+    .empty-sub { font-size: 9px; letter-spacing: .12em; color: var(--border); }
 
-    .log-sec { padding:20px 32px; border-bottom:1px solid var(--g3); display:none; }
+    /* ── Right sections ── */
+    .rsec { padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+
+    /* ── Log ── */
     .logbox {
-      background: transparent; border:1px solid var(--g3); padding:14px;
-      height:180px; overflow-y:auto; font-size:16px; line-height:150%; letter-spacing:.05em;
+      background: var(--surface); border: 1px solid var(--border); padding: 12px;
+      height: 180px; overflow-y: auto; font-size: 9px; line-height: 1.6; letter-spacing: .05em;
     }
-    .logbox::-webkit-scrollbar { width:2px; }
-    .logbox::-webkit-scrollbar-thumb { background:var(--g3); }
-    .ll { opacity:0; animation:fi .3s forwards; }
-    
-    @keyframes fi { to { opacity:1; } }
-    .lok { color:var(--g2); } .lerr { color:var(--r); } .ldone { color:var(--white); letter-spacing:.15em; } .lsearch { color:var(--g2); }
+    .logbox::-webkit-scrollbar { width: 2px; }
+    .logbox::-webkit-scrollbar-thumb { background: var(--border); }
+    .log-line { animation: log-fade 0.3s ease-out forwards; }
+    @keyframes log-fade { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+    .lok { color: var(--fg); } .lerr { color: var(--primary); }
+    .ldone { color: var(--fg); letter-spacing: .15em; } .lsearch { color: var(--muted); }
 
-    .stats-sec { padding:20px 32px; border-bottom:1px solid var(--g3); display:none; }
-    .sgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--g3); border:1px solid var(--g3); }
-    .sbox { background:var(--g1); padding:16px 20px; position:relative; }
-    .sbox::before { content:''; position:absolute; top:0; left:0; width:20px; height:1px; background:var(--r); }
-    .snum { font-size:calc(16px + 1vw); color:var(--white); letter-spacing:-.02em; line-height:100%; margin-bottom:6px; }
-    .slbl2 { font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--g3); }
+    /* ── Stats ── */
+    .sgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .sbox {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 16px; position: relative;
+    }
+    .sbox::before { content: ''; position: absolute; top: 0; left: 0; width: 24px; height: 2px; background: var(--primary); }
+    .sbox::after  { content: ''; position: absolute; top: 0; left: 0; width: 2px; height: 24px; background: var(--primary); }
+    .snum { font-size: 20px; font-weight: 600; color: var(--fg); margin-bottom: 4px; line-height: 1; }
+    .slbl { font-size: 9px; letter-spacing: .12em; color: var(--muted); }
 
-    .table-sec { flex:1; padding:20px 32px; display:none; flex-direction:column; }
-    .twrap { flex:1; overflow:auto; border:1px solid var(--g3); }
-    .twrap::-webkit-scrollbar { width:2px; height:2px; }
-    .twrap::-webkit-scrollbar-thumb { background:var(--g3); }
-    table { width:100%; border-collapse:collapse; font-size:16px; }
-    thead { position:sticky; top:0; background:var(--g1); }
-    th { text-align:left; padding:10px 14px; border-bottom:1px solid var(--g3); font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--g3); font-weight:400; }
-    td { padding:10px 14px; border-bottom:1px solid var(--g3); vertical-align:middle; letter-spacing:.05em; color: var(--g3); }
-    tr:last-child td { border-bottom:none; }
-    tr:hover td { background:rgba(128,128,128,.05); }
-    tr:hover td:first-child { color:var(--g2); }
-    
-    .nhi{color:var(--white);} .nmd{color:var(--g2);} .nlo{color:var(--r);}
-    .sa { color:var(--r); text-decoration:none; font-size:16px; letter-spacing:.05em; }
-    .sa:hover { 
-      color: var(--g2);
-      animation: Pulse 0.05s infinite alternate;
+    /* ── Table ── */
+    .table-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 20px 24px; }
+    .twrap { flex: 1; overflow: auto; border: 1px solid var(--border); }
+    .twrap::-webkit-scrollbar { width: 2px; height: 2px; }
+    .twrap::-webkit-scrollbar-thumb { background: var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 9px; }
+    thead { position: sticky; top: 0; background: var(--surface); z-index: 5; }
+    th {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+      font-size: 9px; letter-spacing: .15em; color: var(--primary); font-weight: 600;
     }
-    @keyframes Pulse {
-      0% { color: var(--g2); }
-      100% { color: var(--g3); }
-    }
-    
-    .nd { color:var(--g3); }
-    .spin { display:inline-block; width:10px; height:10px; border:1px solid var(--g3); border-top-color:var(--r); animation:sp .6s linear infinite; vertical-align:middle; margin-right:6px; }
-    @keyframes sp { to { transform:rotate(360deg); } }
-    
-    .leaflet-control-zoom a { background:var(--g1)!important; color:var(--g2)!important; border-color:var(--g3)!important; }
-    
-    @media(max-width:768px) { .wrap{grid-template-columns:1fr;} .left-panel{border-right:none;border-bottom:1px solid var(--g3);} }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(53,53,53,.5); letter-spacing: .08em; color: var(--muted); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--primary5); }
+    tr:hover td:nth-child(2) { color: var(--fg); }
+
+    .nhi { color: var(--success); font-weight: 600; }
+    .nmd { color: var(--warning); font-weight: 600; }
+    .nlo { color: var(--primary); font-weight: 600; }
+    .nd  { color: var(--border); }
+    .sa  { color: var(--primary); text-decoration: none; }
+    .sa:hover { opacity: .7; }
+
+    /* ── Leaflet overrides ── */
+    .leaflet-container { background: var(--bg) !important; }
+    .leaflet-control-zoom a { background: var(--secondary) !important; color: var(--fg) !important; border-color: var(--border) !important; }
   </style>
 </head>
 <body>
+<div id="app">
 
-<header>
-  <div class="ch-tl"></div>
-  <div class="ch-tr"></div>
-  <div class="logo"><div class="logo-dot"></div>LEADHUNTER_SYS</div>
-  <div class="hcenter">ACQUISITION MODULE v2.0 // APIFY INTEGRATION</div>
-  <div class="spill">SYSTEM ONLINE</div>
-</header>
-
-<div class="wrap">
-  <div class="left-panel">
-    <div class="ph">CONFIG_PARAMETERS</div>
-
-    <div class="ps">
-      <div class="sl">TARGET_SECTOR</div>
-      <div class="nichos-grid" id="nichosGrid"></div>
-      <div class="fl">CUSTOM INPUT</div>
-      <input type="text" id="nichoCustom" placeholder="dentista, academia..."/>
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="h-logo">
+      <div class="pulse-dot"></div>
+      <span>LEADHUNTER_SYS</span>
     </div>
+    <div class="h-center">ACQUISITION MODULE v2.0 // APIFY INTEGRATION</div>
+    <div class="h-status">
+      <div class="dot"></div>
+      <span>SYSTEM ONLINE</span>
+    </div>
+  </header>
 
-    <div class="ps">
-      <div class="sl">SCAN_PARAMETERS</div>
-      <div class="srow">
-        <div class="fl" style="margin:0">LEAD COUNT</div>
-        <div class="sval" id="qtdVal">20</div>
+  <!-- ── MAIN ── -->
+  <div class="wrap">
+
+    <!-- ── LEFT PANEL ── -->
+    <div class="left-panel">
+
+      <!-- TARGET_SECTOR -->
+      <div class="ps">
+        <div class="sl"><span class="pre">//</span><span class="nm">TARGET_SECTOR</span><span class="ln"></span></div>
+        <div class="nichos-grid" id="nichosGrid"></div>
+        <div class="fl">CUSTOM INPUT</div>
+        <input type="text" id="nichoCustom" placeholder="DENTISTA, ACADEMIA..."/>
       </div>
-      <input type="range" id="qtdSlider" min="5" max="100" step="5" value="20"
-        oninput="document.getElementById('qtdVal').textContent=this.value"/>
-      <div class="row2">
-        <div>
-          <div class="fl">MIN RATING</div>
-          <select id="notaMinima">
-            <option value="0">NO FILTER</option>
-            <option value="3">3.0+</option>
-            <option value="3.5" selected>3.5+</option>
-            <option value="4">4.0+</option>
-            <option value="4.5">4.5+</option>
-          </select>
+
+      <!-- SCAN_PARAMETERS -->
+      <div class="ps">
+        <div class="sl"><span class="pre">//</span><span class="nm">SCAN_PARAMETERS</span><span class="ln"></span></div>
+        <div class="srow">
+          <span class="fl" style="margin:0">LEAD COUNT</span>
+          <span class="sval" id="qtdVal">20</span>
         </div>
-        <div>
-          <div class="fl">INIT RADIUS</div>
-          <select id="raioInicial">
-            <option value="2000">2 KM</option>
-            <option value="5000" selected>5 KM</option>
-            <option value="10000">10 KM</option>
-            <option value="20000">20 KM</option>
-            <option value="50000">50 KM</option>
-          </select>
+        <input type="range" id="qtdSlider" min="5" max="100" step="5" value="20"
+          oninput="document.getElementById('qtdVal').textContent=this.value"/>
+        <div class="row2">
+          <div>
+            <div class="fl">MIN RATING</div>
+            <select id="notaMinima">
+              <option value="0">NO FILTER</option>
+              <option value="3">3.0+</option>
+              <option value="3.5" selected>3.5+</option>
+              <option value="4">4.0+</option>
+              <option value="4.5">4.5+</option>
+            </select>
+          </div>
+          <div>
+            <div class="fl">INIT RADIUS</div>
+            <select id="raioInicial">
+              <option value="2000">2 KM</option>
+              <option value="5000" selected>5 KM</option>
+              <option value="10000">10 KM</option>
+              <option value="20000">20 KM</option>
+              <option value="50000">50 KM</option>
+            </select>
+          </div>
+        </div>
+        <div class="trow">
+          <span class="tlbl">AUTO EXPAND RADIUS</span>
+          <label class="toggle">
+            <input type="checkbox" id="autoExpandir" checked/>
+            <span class="tslider"></span>
+          </label>
         </div>
       </div>
-      <div class="trow">
-        <span class="tlbl">AUTO EXPAND RADIUS</span>
-        <label class="toggle">
-          <input type="checkbox" id="autoExpandir" checked/>
-          <span class="tslider"></span>
-        </label>
+
+      <!-- SCAN_ZONE -->
+      <div class="ps">
+        <div class="sl"><span class="pre">//</span><span class="nm">SCAN_ZONE</span><span class="ln"></span></div>
+        <div class="location-wrap">
+          <input type="text" id="locationSearch" placeholder="EX: JUNDIAI, SAO PAULO..."
+            oninput="onLocationInput()" onkeydown="if(event.key==='Enter')searchLocation()"/>
+          <button class="btn-search" onclick="searchLocation()" title="Buscar">&#x2316;</button>
+          <div id="locationSuggestions"></div>
+        </div>
+        <div id="map"></div>
+        <div class="mhint">> BUSQUE UMA CIDADE OU CLIQUE NO MAPA</div>
       </div>
-    </div>
 
-    <div class="ps">
-      <div class="sl">SCAN_ZONE</div>
-      <div style="position:relative;margin-bottom:8px;">
-        <input type="text" id="locationSearch" placeholder="Ex: Jundiai, Sao Paulo..." style="margin-bottom:0;padding-right:40px;" oninput="onLocationInput()" onkeydown="if(event.key==='Enter')searchLocation()"/>
-        <button onclick="searchLocation()" style="position:absolute;right:0;top:0;bottom:0;width:38px;background:transparent;border:none;border-left:1px solid var(--g3);color:var(--r);cursor:crosshair;font-size:18px;" title="Buscar">&#x2316;</button>
-        <div id="locationSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--g1);border:1px solid var(--g3);border-top:none;z-index:999;max-height:180px;overflow-y:auto;"></div>
+      <!-- ACTIONS -->
+      <div class="ps" style="border-bottom:none; margin-top: auto;">
+        <button class="btn-exec" id="btnScrape" onclick="startScraping()">[ EXECUTE SCAN ]</button>
+        <button class="btn-dl" id="btnDl" style="display:none" onclick="downloadMd()">[ EXPORT .MD ]</button>
       </div>
-      <div id="map"></div>
-      <div class="mhint">> BUSQUE UMA CIDADE OU CLIQUE NO MAPA</div>
-    </div>
 
-    <div class="ps" style="border-bottom:none">
-      <button class="btn-exec" id="btnScrape" onclick="startScraping()">[ EXECUTE SCAN ]</button>
-      <button class="btn-dl" id="btnDl" style="display:none" onclick="downloadMd()">[ EXPORT .MD ]</button>
-    </div>
-  </div>
+    </div><!-- /left-panel -->
 
-  <div class="right-panel">
-    <div class="rh">
-      <div class="rht">OUTPUT_STREAM</div>
-      <div class="rhb" id="rhBadge">STANDBY</div>
-    </div>
+    <!-- ── RIGHT PANEL ── -->
+    <div class="right-panel">
 
-    <div class="empty-state" id="emptyState">
-      <div class="ecross"></div>
-      <div class="etxt">SYSTEM READY<br/>CONFIGURE PARAMETERS<br/>AND EXECUTE SCAN</div>
-    </div>
-
-    <div class="log-sec" id="logSec">
-      <div class="sl" style="margin-bottom:10px">SCAN_LOG</div>
-      <div class="logbox" id="logbox"></div>
-    </div>
-
-    <div class="stats-sec" id="statsSec">
-      <div class="sl" style="margin-bottom:14px">ACQUISITION_REPORT</div>
-      <div class="sgrid">
-        <div class="sbox"><div class="snum" id="stTotal">0</div><div class="slbl2">TOTAL LEADS</div></div>
-        <div class="sbox"><div class="snum" id="stSite">0</div><div class="slbl2">WITH WEBSITE</div></div>
-        <div class="sbox"><div class="snum" id="stNota">—</div><div class="slbl2">AVG RATING</div></div>
+      <!-- sub-header -->
+      <div class="rh">
+        <div class="rht">
+          <span class="pre">//</span>
+          <span class="nm">OUTPUT_STREAM</span>
+        </div>
+        <div class="badge standby" id="badge">STANDBY</div>
       </div>
-    </div>
 
-    <div class="table-sec" id="tableSec">
-      <div class="sl" style="margin-bottom:14px">LEAD_DATABASE</div>
-      <div class="twrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>DESIGNATION</th><th>LOCATION</th><th>CONTACT</th><th>RATING</th><th>REVIEWS</th><th>SITE</th></tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+      <!-- empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">⌖</div>
+        <div class="empty-txt">SYSTEM READY<br/>CONFIGURE PARAMETERS AND EXECUTE SCAN</div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- log -->
+      <div class="rsec" id="logSec" style="display:none">
+        <div class="sl" style="margin-bottom:10px"><span class="pre">//</span><span class="nm">SCAN_LOG</span><span class="ln"></span></div>
+        <div class="logbox" id="logbox"></div>
+      </div>
+
+      <!-- stats -->
+      <div class="rsec" id="statsSec" style="display:none">
+        <div class="sl" style="margin-bottom:14px"><span class="pre">//</span><span class="nm">ACQUISITION_REPORT</span><span class="ln"></span></div>
+        <div class="sgrid">
+          <div class="sbox"><div class="snum" id="stTotal">0</div><div class="slbl">TOTAL LEADS</div></div>
+          <div class="sbox"><div class="snum" id="stSite">0</div><div class="slbl">WITH WEBSITE</div></div>
+          <div class="sbox"><div class="snum" id="stNota">—</div><div class="slbl">AVG RATING</div></div>
+        </div>
+      </div>
+
+      <!-- table -->
+      <div class="table-wrap" id="tableSec" style="display:none">
+        <div class="sl" style="margin-bottom:14px"><span class="pre">//</span><span class="nm">LEAD_DATABASE</span><span class="ln"></span></div>
+        <div class="twrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>DESIGNATION</th><th>LOCATION</th><th>CONTACT</th><th>RATING</th><th>REVIEWS</th><th>SITE</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+  </div><!-- /wrap -->
+</div><!-- /app -->
 
 <script>
-const API = '';  // mesmo servidor — backend serve o frontend
+const API = '';
 
 const NICHOS = [
   {label:"PETSHOP",     q:"petshop banho e tosa"},
@@ -488,131 +461,138 @@ const NICHOS = [
   {label:"LIMPEZA",     q:"empresa de limpeza"},
 ];
 
-let nichoSel="", currentJobId=null, pollInterval=null, lastLogCount=0;
-let mapLat=null, mapLng=null, mapCircle=null, mapMarker=null;
+let nichoSel = '', currentJobId = null, pollInterval = null, lastLogCount = 0;
+let mapLat = null, mapLng = null, mapCircle = null, mapMarker = null;
 
+// Build nicho chips
 document.getElementById('nichosGrid').innerHTML = NICHOS.map(n =>
-  `<div class="nicho-chip" onclick="selectNicho('${n.q}',this)">${n.label}</div>`
+  `<button class="nicho-chip" onclick="selectNicho('${n.q}',this)">${n.label}</button>`
 ).join('');
 
-function selectNicho(q,el){
-  document.querySelectorAll('.nicho-chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); nichoSel=q;
-  document.getElementById('nichoCustom').value='';
+function selectNicho(q, el) {
+  document.querySelectorAll('.nicho-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  nichoSel = q;
+  document.getElementById('nichoCustom').value = '';
 }
 
-const map=L.map('map').setView([-23.55,-46.63],11);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
+// Map
+const map = L.map('map').setView([-23.55, -46.63], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+}).addTo(map);
 
-function updateCircle(lat,lng){
-  const raio=parseInt(document.getElementById('raioInicial').value);
-  if(mapMarker)map.removeLayer(mapMarker);
-  if(mapCircle)map.removeLayer(mapCircle);
-  mapMarker=L.circleMarker([lat,lng],{radius:4,color:'red',fillColor:'red',fillOpacity:1}).addTo(map);
-  mapCircle=L.circle([lat,lng],{radius:raio,color:'red',fillColor:'red',fillOpacity:.05,weight:1,dashArray:'4,4'}).addTo(map);
-  mapLat=lat; mapLng=lng;
+function updateCircle(lat, lng) {
+  const raio = parseInt(document.getElementById('raioInicial').value);
+  if (mapMarker) map.removeLayer(mapMarker);
+  if (mapCircle) map.removeLayer(mapCircle);
+  mapMarker = L.circleMarker([lat, lng], { radius: 4, color: 'red', fillColor: 'red', fillOpacity: 1 }).addTo(map);
+  mapCircle = L.circle([lat, lng], { radius: raio, color: 'red', fillColor: 'red', fillOpacity: .05, weight: 1, dashArray: '4,4' }).addTo(map);
+  mapLat = lat; mapLng = lng;
 }
 
-map.on('click',e=>updateCircle(e.latlng.lat,e.latlng.lng));
-document.getElementById('raioInicial').addEventListener('change',()=>{
-  if(mapLat&&mapLng)updateCircle(mapLat,mapLng);
+map.on('click', e => updateCircle(e.latlng.lat, e.latlng.lng));
+document.getElementById('raioInicial').addEventListener('change', () => {
+  if (mapLat && mapLng) updateCircle(mapLat, mapLng);
 });
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(p=>{
-    map.setView([p.coords.latitude,p.coords.longitude],12);
-    updateCircle(p.coords.latitude,p.coords.longitude);
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(p => {
+    map.setView([p.coords.latitude, p.coords.longitude], 12);
+    updateCircle(p.coords.latitude, p.coords.longitude);
   });
 }
 
-async function startScraping(){
-  const nichoCustom=document.getElementById('nichoCustom').value.trim();
-  const nicho=nichoCustom||nichoSel;
-  const quantidade=parseInt(document.getElementById('qtdSlider').value);
-  const notaMinima=parseFloat(document.getElementById('notaMinima').value);
-  const raioInicial=parseInt(document.getElementById('raioInicial').value);
-  const autoExpandir=document.getElementById('autoExpandir').checked;
+// Scraping
+async function startScraping() {
+  const nichoCustom = document.getElementById('nichoCustom').value.trim();
+  const nicho = nichoCustom || nichoSel;
+  if (!nicho) return alert('SELECT TARGET SECTOR');
 
-  if(!nicho)return alert('SELECT TARGET SECTOR');
+  const quantidade   = parseInt(document.getElementById('qtdSlider').value);
+  const notaMinima   = parseFloat(document.getElementById('notaMinima').value);
+  const raioInicial  = parseInt(document.getElementById('raioInicial').value);
+  const autoExpandir = document.getElementById('autoExpandir').checked;
 
-  document.getElementById('emptyState').style.display='none';
-  document.getElementById('logSec').style.display='block';
-  document.getElementById('statsSec').style.display='none';
-  document.getElementById('tableSec').style.display='none';
-  document.getElementById('btnDl').style.display='none';
-  document.getElementById('logbox').innerHTML='';
-  document.getElementById('btnScrape').disabled=true;
-  setBadge('running','<span class="spin"></span>SCANNING...');
-  lastLogCount=0;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('logSec').style.display = 'block';
+  document.getElementById('statsSec').style.display = 'none';
+  document.getElementById('tableSec').style.display = 'none';
+  document.getElementById('btnDl').style.display = 'none';
+  document.getElementById('logbox').innerHTML = '';
+  document.getElementById('btnScrape').disabled = true;
+  setBadge('running', '<span class="spin"></span>SCANNING...');
+  lastLogCount = 0;
 
-  try{
-    const body={nicho,quantidade,notaMinima,raioInicial,autoExpandir};
-    if(mapLat&&mapLng){body.lat=mapLat;body.lng=mapLng;}
-    const res=await fetch(`${API}/api/scrape`,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
-    });
-    const data=await res.json();
-    if(!data.jobId)throw new Error(data.error||'INIT FAILED');
-    currentJobId=data.jobId;
-    pollInterval=setInterval(pollJob,2500);
-  }catch(e){
-    addLog('// ERR: '+e.message,'err');
-    setBadge('error','ERROR');
-    document.getElementById('btnScrape').disabled=false;
+  try {
+    const body = { nicho, quantidade, notaMinima, raioInicial, autoExpandir };
+    if (mapLat && mapLng) { body.lat = mapLat; body.lng = mapLng; }
+    const res  = await fetch(`${API}/api/scrape`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!data.jobId) throw new Error(data.error || 'INIT FAILED');
+    currentJobId = data.jobId;
+    pollInterval = setInterval(pollJob, 2500);
+  } catch(e) {
+    addLog('> ERR: ' + e.message, 'err');
+    setBadge('error', 'ERROR');
+    document.getElementById('btnScrape').disabled = false;
   }
 }
 
-async function pollJob(){
-  try{
-    const res=await fetch(`${API}/api/job/${currentJobId}`);
-    const job=await res.json();
-    job.progress.slice(lastLogCount).forEach(p=>addLog('> '+p.msg,p.type));
-    lastLogCount=job.progress.length;
-    if(job.status==='done'){
+async function pollJob() {
+  try {
+    const res = await fetch(`${API}/api/job/${currentJobId}`);
+    const job = await res.json();
+    job.progress.slice(lastLogCount).forEach(p => addLog('> ' + p.msg, p.type));
+    lastLogCount = job.progress.length;
+    if (job.status === 'done') {
       clearInterval(pollInterval);
-      setBadge('done','COMPLETE');
-      document.getElementById('btnScrape').disabled=false;
-      document.getElementById('btnDl').style.display='block';
+      setBadge('done', 'COMPLETE');
+      document.getElementById('btnScrape').disabled = false;
+      document.getElementById('btnDl').style.display = 'block';
       renderResults(job.leads);
-    }else if(job.status==='error'){
+    } else if (job.status === 'error') {
       clearInterval(pollInterval);
-      setBadge('error','ERROR');
-      addLog('// CRITICAL: '+job.error,'err');
-      document.getElementById('btnScrape').disabled=false;
+      setBadge('error', 'ERROR');
+      addLog('> CRITICAL: ' + job.error, 'err');
+      document.getElementById('btnScrape').disabled = false;
     }
-  }catch(e){addLog('// WARNING: CONNECTION LOST','err');}
+  } catch(e) { addLog('> WARNING: CONNECTION LOST', 'err'); }
 }
 
-function addLog(msg,type){
-  const box=document.getElementById('logbox');
-  const d=document.createElement('div');
-  d.className=`ll l${type}`; d.textContent=msg;
-  box.appendChild(d); box.scrollTop=box.scrollHeight;
+function addLog(msg, type) {
+  const box = document.getElementById('logbox');
+  const d = document.createElement('div');
+  d.className = 'log-line l' + type;
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
 }
 
-function setBadge(cls,txt){
-  const b=document.getElementById('rhBadge');
-  b.className=`rhb ${cls}`; b.innerHTML=txt;
+function setBadge(cls, html) {
+  const b = document.getElementById('badge');
+  b.className = 'badge ' + cls;
+  b.innerHTML = html;
 }
 
-function renderResults(leads){
-  document.getElementById('statsSec').style.display='block';
-  document.getElementById('tableSec').style.display='flex';
-  const comSite=leads.filter(l=>l.website&&l.website!=='—').length;
-  const notas=leads.map(l=>parseFloat(l.nota)).filter(n=>!isNaN(n)&&n>0);
-  const media=notas.length?(notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1):'—';
-  document.getElementById('stTotal').textContent=leads.length;
-  document.getElementById('stSite').textContent=comSite;
-  document.getElementById('stNota').textContent=media;
-  document.getElementById('tbody').innerHTML=leads.map((l,i)=>{
-    const n=parseFloat(l.nota);
-    const nc=n>=4?'nhi':n>=3.5?'nmd':'nlo';
-    const nh=n?`<span class="${nc}">${n}</span>`:'<span class="nd">N/A</span>';
-    const sh=l.website&&l.website!=='—'
-      ?`<a class="sa" href="${l.website}" target="_blank">[LINK]</a>`
-      :'<span class="nd">—</span>';
-    return`<tr>
-      <td class="nd">${String(i+1).padStart(2,'0')}</td>
-      <td style="color:#e8e8e8">${l.nome}</td>
+function renderResults(leads) {
+  document.getElementById('statsSec').style.display = 'block';
+  document.getElementById('tableSec').style.display = 'flex';
+  const comSite = leads.filter(l => l.website && l.website !== '—').length;
+  const notas   = leads.map(l => parseFloat(l.nota)).filter(n => !isNaN(n) && n > 0);
+  const media   = notas.length ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1) : '—';
+  document.getElementById('stTotal').textContent = leads.length;
+  document.getElementById('stSite').textContent  = comSite;
+  document.getElementById('stNota').textContent  = media;
+  document.getElementById('tbody').innerHTML = leads.map((l, i) => {
+    const n  = parseFloat(l.nota);
+    const nc = n >= 4 ? 'nhi' : n >= 3.5 ? 'nmd' : 'nlo';
+    const nh = n ? `<span class="${nc}">${n}</span>` : '<span class="nd">N/A</span>';
+    const sh = l.website && l.website !== '—'
+      ? `<a class="sa" href="${l.website}" target="_blank">[LINK]</a>`
+      : '<span class="nd">—</span>';
+    return `<tr>
+      <td class="nd">${String(i + 1).padStart(2, '0')}</td>
+      <td style="color:var(--fg)">${l.nome}</td>
       <td>${l.cidade}</td>
       <td>${l.telefone}</td>
       <td>${nh}</td>
@@ -622,11 +602,11 @@ function renderResults(leads){
   }).join('');
 }
 
-function downloadMd(){
-  if(currentJobId)window.location.href=`${API}/api/job/${currentJobId}/download`;
+function downloadMd() {
+  if (currentJobId) window.location.href = `${API}/api/job/${currentJobId}/download`;
 }
 
-// GEOCODING - busca de cidade
+// Geocoding
 let locationDebounce = null;
 
 function onLocationInput() {
@@ -638,9 +618,7 @@ function onLocationInput() {
 
 async function fetchSuggestions(query) {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q=${encodeURIComponent(query)}`, {
-      headers: { 'Accept-Language': 'pt-BR' }
-    });
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'pt-BR' } });
     const data = await res.json();
     showSuggestions(data);
   } catch(e) {}
@@ -648,12 +626,9 @@ async function fetchSuggestions(query) {
 
 function showSuggestions(results) {
   const box = document.getElementById('locationSuggestions');
-  if (!results.length) { box.style.display='none'; return; }
-  box.innerHTML = results.map((r,i) => 
-    `<div onclick="selectLocation(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"&#39;")}')" 
-      style="padding:10px 14px;border-bottom:1px solid var(--g3);cursor:crosshair;font-size:13px;color:var(--g2);letter-spacing:0.05em;"
-      onmouseover="this.style.color='var(--r)'" onmouseout="this.style.color='var(--g2)'"
-    >${r.display_name}</div>`
+  if (!results.length) { box.style.display = 'none'; return; }
+  box.innerHTML = results.map(r =>
+    `<div class="sugg-item" onclick="selectLocation(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"&#39;")}')">${r.display_name}</div>`
   ).join('');
   box.style.display = 'block';
 }
@@ -664,9 +639,8 @@ function hideSuggestions() {
 
 function selectLocation(lat, lon, name) {
   hideSuggestions();
-  document.getElementById('locationSearch').value = name.split(',').slice(0,2).join(',').trim();
-  const z = 12;
-  map.setView([lat, lon], z);
+  document.getElementById('locationSearch').value = name.split(',').slice(0, 2).join(',').trim();
+  map.setView([lat, lon], 12);
   updateCircle(parseFloat(lat), parseFloat(lon));
 }
 
@@ -674,19 +648,14 @@ async function searchLocation() {
   const val = document.getElementById('locationSearch').value.trim();
   if (!val) return;
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(val)}`, {
-      headers: { 'Accept-Language': 'pt-BR' }
-    });
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(val)}`, { headers: { 'Accept-Language': 'pt-BR' } });
     const data = await res.json();
     if (data.length) selectLocation(data[0].lat, data[0].lon, data[0].display_name);
   } catch(e) {}
 }
 
-// Fechar sugestões ao clicar fora
 document.addEventListener('click', e => {
-  if (!e.target.closest('#locationSearch') && !e.target.closest('#locationSuggestions')) {
-    hideSuggestions();
-  }
+  if (!e.target.closest('#locationSearch') && !e.target.closest('#locationSuggestions')) hideSuggestions();
 });
 </script>
 </body>
