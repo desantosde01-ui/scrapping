@@ -56,7 +56,7 @@ async function upsertToTable(rows, tabela, onConflict) {
   return rows.length;
 }
 
-async function upsertLeadsSupabase(leads) {
+async function upsertLeadsSupabase(leads, jobId = null) {
   const rows = leads.filter(l => l.telefone && l.telefone !== "—").map(mapRow);
   let saved = 0, skipped = 0;
   for (const row of rows) {
@@ -65,7 +65,9 @@ async function upsertLeadsSupabase(leads) {
       saved++;
     } catch (e) {
       skipped++;
-      console.error(`[supabase] skip "${row.company_name}": ${e.message}`);
+      const detail = e.message.replace(/\s+/g, ' ').slice(0, 120);
+      console.error(`[supabase] skip "${row.company_name}": ${detail}`);
+      if (jobId) jobs[jobId].progress.push({ type: "err", msg: `⚠️ Skip "${row.company_name}": ${detail}`, ts: new Date() });
     }
   }
   return { total: rows.length, saved, skipped };
@@ -113,7 +115,7 @@ app.post("/api/job/:jobId/retry-supabase", async (req, res) => {
 
   job.progress.push({ type: "search", msg: `🔄 Tentando salvar novamente no Supabase...`, ts: new Date() });
   try {
-    const result = await upsertLeadsSupabase(job.leads);
+    const result = await upsertLeadsSupabase(job.leads, req.params.jobId);
     job.supabaseStatus = result.skipped > 0 ? "partial" : "ok";
     const skipMsg = result.skipped > 0 ? ` (${result.skipped} ignorados)` : "";
     job.progress.push({ type: "ok", msg: `✅ ${result.saved}/${result.total} leads salvos → tabela "leads"${skipMsg}`, ts: new Date() });
@@ -188,7 +190,7 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
 
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
-      const result = await upsertLeadsSupabase(leads);
+      const result = await upsertLeadsSupabase(leads, jobId);
       jobs[jobId].supabaseStatus = result.skipped > 0 ? "partial" : "ok";
       const skipMsg = result.skipped > 0 ? ` (${result.skipped} ignorados por erro)` : "";
       jobs[jobId].progress.push({ type: "ok", msg: `✅ ${result.saved}/${result.total} leads salvos → tabela "leads"${skipMsg}`, ts: new Date() });
