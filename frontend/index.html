@@ -190,7 +190,7 @@
     .sugg-item:last-child { border-bottom: none; }
     .sugg-item:hover { color: var(--primary); }
     #map {
-      height: 200px; border: 1px solid var(--border); margin-bottom: 6px;
+      height: 240px; border: 1px solid var(--border); margin-bottom: 6px;
       filter: grayscale(100%) invert(100%) hue-rotate(180deg) contrast(120%);
     }
     .mhint { font-size: 9px; letter-spacing: .12em; color: var(--border); }
@@ -476,18 +476,18 @@ function selectNicho(q, el) {
   document.getElementById('nichoCustom').value = '';
 }
 
-// Map
-const map = L.map('map').setView([-23.55, -46.63], 11);
+// Map — same logic as lead-hunter-command React frontend
+const map = L.map('map').setView([-14.235, -51.925], 4);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+  attribution: '&copy; OSM', maxZoom: 19
 }).addTo(map);
 
 function updateCircle(lat, lng) {
   const raio = parseInt(document.getElementById('raioInicial').value);
   if (mapMarker) map.removeLayer(mapMarker);
   if (mapCircle) map.removeLayer(mapCircle);
-  mapMarker = L.circleMarker([lat, lng], { radius: 4, color: 'red', fillColor: 'red', fillOpacity: 1 }).addTo(map);
-  mapCircle = L.circle([lat, lng], { radius: raio, color: 'red', fillColor: 'red', fillOpacity: .05, weight: 1, dashArray: '4,4' }).addTo(map);
+  mapMarker = L.circleMarker([lat, lng], { radius: 5, color: '#ff0000', fillColor: '#ff0000', fillOpacity: 1 }).addTo(map);
+  mapCircle = L.circle([lat, lng], { radius: raio, color: '#ff0000', dashArray: '8 4', fillOpacity: 0.05, weight: 1 }).addTo(map);
   mapLat = lat; mapLng = lng;
 }
 
@@ -495,12 +495,10 @@ map.on('click', e => updateCircle(e.latlng.lat, e.latlng.lng));
 document.getElementById('raioInicial').addEventListener('change', () => {
   if (mapLat && mapLng) updateCircle(mapLat, mapLng);
 });
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(p => {
-    map.setView([p.coords.latitude, p.coords.longitude], 12);
-    updateCircle(p.coords.latitude, p.coords.longitude);
-  });
-}
+
+// Geolocate on load — uses Leaflet's locate (same as React's map.locate)
+map.locate({ setView: true, maxZoom: 13 });
+map.on('locationfound', e => updateCircle(e.latlng.lat, e.latlng.lng));
 
 // Scraping
 async function startScraping() {
