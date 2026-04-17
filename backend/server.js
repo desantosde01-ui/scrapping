@@ -20,18 +20,21 @@ function generateJobId() {
 
 function mapRow(l) {
   return {
-    placeUrl: l.placeId,
-    title: l.nome,
-    rating: l.nota !== "—" ? String(l.nota) : null,
-    reviewCount: l.reviews ? String(l.reviews) : null,
-    category: l.categorias !== "—" ? l.categorias : null,
-    address: l.endereco !== "—" ? `${l.endereco}, ${l.cidade}` : null,
-    website: l.website !== "—" ? l.website : null,
-    phoneNumber: l.telefone !== "—" ? l.telefone : null,
+    phone_number: l.telefone !== "—" ? l.telefone : null,
+    company_name: l.nome || null,
+    address:      l.endereco !== "—" ? l.endereco : null,
+    city:         l.cidade !== "—" ? l.cidade : null,
+    website:      l.website !== "—" ? l.website : null,
+    category:     l.categorias !== "—" ? l.categorias : null,
+    extra_data: {
+      rating:      l.nota !== "—" ? String(l.nota) : null,
+      review_count: l.reviews ? String(l.reviews) : null,
+      place_url:   l.googleMaps !== "—" ? l.googleMaps : null,
+    },
   };
 }
 
-async function upsertToTable(rows, tabela, onConflict = "placeUrl") {
+async function insertToTable(rows, tabela) {
   if (rows.length === 0) return 0;
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`, {
     method: "POST",
@@ -39,8 +42,7 @@ async function upsertToTable(rows, tabela, onConflict = "placeUrl") {
       "Content-Type": "application/json",
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Prefer": `resolution=ignore-duplicates`,
-      "on-conflict": onConflict,
+      "Prefer": "return=minimal",
     },
     body: JSON.stringify(rows),
   });
@@ -51,15 +53,10 @@ async function upsertToTable(rows, tabela, onConflict = "placeUrl") {
   return rows.length;
 }
 
-
 async function upsertLeadsSupabase(leads) {
-  const comSite = leads.filter(l => l.website && l.website !== "—").map(mapRow);
-  const semSite = leads.filter(l => (!l.website || l.website === "—") && l.telefone && l.telefone !== "—").map(mapRow);
-
-  await upsertToTable(comSite, "leads_scraping", "phoneNumber");
-  await upsertToTable(semSite, "leads_sem_site", "phoneNumber");
-
-  return { comSite: comSite.length, semSite: semSite.length };
+  const rows = leads.filter(l => l.telefone && l.telefone !== "—").map(mapRow);
+  await insertToTable(rows, "leads");
+  return { total: rows.length };
 }
 
 app.post("/api/scrape", async (req, res) => {
@@ -158,8 +155,8 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
 
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
-      const { comSite, semSite } = await upsertLeadsSupabase(leads);
-      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${comSite} com site → tabela "leads_scraping" | ${semSite} sem site → tabela "leads_sem_site"`, ts: new Date() });
+      const result = await upsertLeadsSupabase(leads);
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${result.total} leads salvos → tabela "leads"`, ts: new Date() });
     } catch (e) {
       jobs[jobId].progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
     }
