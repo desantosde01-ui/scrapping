@@ -22,6 +22,8 @@ const trunc = (s, n = 255) => (s && s.length > n ? s.slice(0, n) : s);
 
 function mapRow(l) {
   return {
+    user_id:      "b7a15b76-6e37-4484-ad93-7de9f3670123",
+    agent_id:     "f3ae2c20-cc43-4101-947f-fc3445d83b49",
     phone_number: l.telefone !== "—" ? trunc(l.telefone, 50) : null,
     company_name: l.nome ? trunc(l.nome) : null,
     address:      l.endereco !== "—" ? trunc(l.endereco) : null,
