@@ -56,7 +56,7 @@ async function upsertLeadsSupabase(leads) {
   const comSite = leads.filter(l => l.website && l.website !== "—").map(mapRow);
   const semSite = leads.filter(l => (!l.website || l.website === "—") && l.telefone && l.telefone !== "—").map(mapRow);
 
-  await upsertToTable(comSite, "leads", "placeUrl");
+  await upsertToTable(comSite, "leads_scraping", "phoneNumber");
   await upsertToTable(semSite, "leads_sem_site", "phoneNumber");
 
   return { comSite: comSite.length, semSite: semSite.length };
@@ -159,7 +159,7 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
       const { comSite, semSite } = await upsertLeadsSupabase(leads);
-      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${comSite} com site → tabela "leads" | ${semSite} sem site → tabela "leads_sem_site"`, ts: new Date() });
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${comSite} com site → tabela "leads_scraping" | ${semSite} sem site → tabela "leads_sem_site"`, ts: new Date() });
     } catch (e) {
       jobs[jobId].progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
     }
