@@ -389,6 +389,7 @@
       <div class="ps" style="border-bottom:none; margin-top: auto;">
         <button class="btn-exec" id="btnScrape" onclick="startScraping()">[ EXECUTE SCAN ]</button>
         <button class="btn-dl" id="btnDl" style="display:none" onclick="downloadMd()">[ EXPORT .MD ]</button>
+        <button class="btn-dl" id="btnRetry" style="display:none;border-color:var(--warning);color:var(--warning)" onclick="retrySupabase()">[ RETRY SUPABASE ]</button>
       </div>
 
     </div><!-- /left-panel -->
@@ -515,6 +516,7 @@ async function startScraping() {
   document.getElementById('statsSec').style.display = 'none';
   document.getElementById('tableSec').style.display = 'none';
   document.getElementById('btnDl').style.display = 'none';
+  document.getElementById('btnRetry').style.display = 'none';
   document.getElementById('logbox').innerHTML = '';
   document.getElementById('btnScrape').disabled = true;
   setBadge('running', '<span class="spin"></span>SCANNING...');
@@ -546,6 +548,9 @@ async function pollJob() {
       setBadge('done', 'COMPLETE');
       document.getElementById('btnScrape').disabled = false;
       document.getElementById('btnDl').style.display = 'block';
+      if (job.supabaseStatus === 'error' || job.supabaseStatus === 'partial') {
+        document.getElementById('btnRetry').style.display = 'block';
+      }
       renderResults(job.leads);
     } else if (job.status === 'error') {
       clearInterval(pollInterval);
@@ -601,6 +606,23 @@ function renderResults(leads) {
 
 function downloadMd() {
   if (currentJobId) window.location.href = `${API}/api/job/${currentJobId}/download`;
+}
+
+async function retrySupabase() {
+  if (!currentJobId) return;
+  const btn = document.getElementById('btnRetry');
+  btn.disabled = true;
+  btn.textContent = '[ RETRYING... ]';
+  try {
+    await fetch(`${API}/api/job/${currentJobId}/retry-supabase`, { method: 'POST' });
+    btn.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '[ RETRY SUPABASE ]';
+  } catch(e) {
+    addLog('> ERR: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '[ RETRY SUPABASE ]';
+  }
 }
 
 // Geocoding

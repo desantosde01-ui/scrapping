@@ -18,18 +18,20 @@ function generateJobId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+const trunc = (s, n = 255) => (s && s.length > n ? s.slice(0, n) : s);
+
 function mapRow(l) {
   return {
-    phone_number: l.telefone !== "—" ? l.telefone : null,
-    company_name: l.nome || null,
-    address:      l.endereco !== "—" ? l.endereco : null,
-    city:         l.cidade !== "—" ? l.cidade : null,
-    website:      l.website !== "—" ? l.website : null,
-    category:     l.categorias !== "—" ? l.categorias : null,
+    phone_number: l.telefone !== "—" ? trunc(l.telefone, 50) : null,
+    company_name: l.nome ? trunc(l.nome) : null,
+    address:      l.endereco !== "—" ? trunc(l.endereco) : null,
+    city:         l.cidade !== "—" ? trunc(l.cidade, 100) : null,
+    website:      l.website !== "—" ? trunc(l.website) : null,
+    category:     l.categorias !== "—" ? trunc(l.categorias) : null,
     extra_data: {
       rating:      l.nota !== "—" ? String(l.nota) : null,
       review_count: l.reviews ? String(l.reviews) : null,
-      place_url:   l.googleMaps !== "—" ? l.googleMaps : null,
+      place_url:   l.googleMaps !== "—" ? trunc(l.googleMaps) : null,
     },
   };
 }
@@ -56,8 +58,17 @@ async function upsertToTable(rows, tabela, onConflict) {
 
 async function upsertLeadsSupabase(leads) {
   const rows = leads.filter(l => l.telefone && l.telefone !== "—").map(mapRow);
-  await upsertToTable(rows, "leads", "phone_number");
-  return { total: rows.length };
+  let saved = 0, skipped = 0;
+  for (const row of rows) {
+    try {
+      await upsertToTable([row], "leads", "phone_number");
+      saved++;
+    } catch (e) {
+      skipped++;
+      console.error(`[supabase] skip "${row.company_name}": ${e.message}`);
+    }
+  }
+  return { total: rows.length, saved, skipped };
 }
 
 app.post("/api/scrape", async (req, res) => {
@@ -71,7 +82,7 @@ app.post("/api/scrape", async (req, res) => {
   }
 
   const jobId = generateJobId();
-  jobs[jobId] = { status: "running", progress: [], leads: [], error: null, startedAt: new Date(), nicho };
+  jobs[jobId] = { status: "running", progress: [], leads: [], error: null, supabaseStatus: null, startedAt: new Date(), nicho };
   res.json({ jobId });
   runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioInicial, autoExpandir);
 });
@@ -89,6 +100,27 @@ app.get("/api/job/:jobId/download", (req, res) => {
   res.setHeader("Content-Type", "text/markdown");
   res.setHeader("Content-Disposition", `attachment; filename="leads_${(job.nicho||'leads').replace(/\s+/g,'_')}_${req.params.jobId}.md"`);
   res.send(md);
+});
+
+app.post("/api/job/:jobId/retry-supabase", async (req, res) => {
+  const job = jobs[req.params.jobId];
+  if (!job) return res.status(404).json({ error: "Job não encontrado." });
+  if (!job.leads || job.leads.length === 0) return res.status(400).json({ error: "Sem leads para salvar." });
+  if (job.supabaseStatus === "retrying") return res.status(409).json({ error: "Retry já em andamento." });
+
+  job.supabaseStatus = "retrying";
+  res.json({ ok: true });
+
+  job.progress.push({ type: "search", msg: `🔄 Tentando salvar novamente no Supabase...`, ts: new Date() });
+  try {
+    const result = await upsertLeadsSupabase(job.leads);
+    job.supabaseStatus = result.skipped > 0 ? "partial" : "ok";
+    const skipMsg = result.skipped > 0 ? ` (${result.skipped} ignorados)` : "";
+    job.progress.push({ type: "ok", msg: `✅ ${result.saved}/${result.total} leads salvos → tabela "leads"${skipMsg}`, ts: new Date() });
+  } catch (e) {
+    job.supabaseStatus = "error";
+    job.progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
+  }
 });
 
 function raioParaZoom(raioMetros) {
@@ -157,8 +189,11 @@ async function runScraping(jobId, nicho, quantidade, notaMinima, lat, lng, raioI
     jobs[jobId].progress.push({ type: "search", msg: `☁️ Salvando ${leads.length} leads no Supabase...`, ts: new Date() });
     try {
       const result = await upsertLeadsSupabase(leads);
-      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${result.total} leads salvos → tabela "leads"`, ts: new Date() });
+      jobs[jobId].supabaseStatus = result.skipped > 0 ? "partial" : "ok";
+      const skipMsg = result.skipped > 0 ? ` (${result.skipped} ignorados por erro)` : "";
+      jobs[jobId].progress.push({ type: "ok", msg: `✅ ${result.saved}/${result.total} leads salvos → tabela "leads"${skipMsg}`, ts: new Date() });
     } catch (e) {
+      jobs[jobId].supabaseStatus = "error";
       jobs[jobId].progress.push({ type: "err", msg: `❌ Erro Supabase: ${e.message}`, ts: new Date() });
     }
 
